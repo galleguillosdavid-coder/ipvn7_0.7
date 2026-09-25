@@ -1,0 +1,9 @@
+/* ipvn7 Universal Core Dashboard v0.7.0 — Master Stylesheet */
+/* Axioma III: Límite estricto de 400 líneas por archivo */
+
+@import url('/style_base.css');
+@import url('/style_dashboard.css');
+@import url('/style_dispatcher.css');
+@import url('/style_homehub.css');
+@import url('/style_chat.css');
+@import url('/style_hero_button.css');

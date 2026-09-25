@@ -1,0 +1,29 @@
+[
+  {
+    "name": "notebook.ipv7",
+    "did": "did:ipvn7:e93524a43b6487f4d6b0b0881251b5088d06f1ad3c400edd1d26d2eb777e838a",
+    "virtual_ipv6": "fd07::15db:7410:1b19:cc86",
+    "virtual_ipv4": "10.7.21.219",
+    "context_root": "",
+    "assigned_at": "2026-09-17T00:30:15.7659878-03:00",
+    "comment": "Registrado vía CLI"
+  },
+  {
+    "name": "did:ipvn7:e93524a43b6487f4d6b0b0881251b5088d06f1ad3c400edd1d26d2eb777e838a.ipv7",
+    "did": "mi_nodo_principal",
+    "virtual_ipv6": "fd07::",
+    "virtual_ipv4": "10.7.0.2",
+    "context_root": "",
+    "assigned_at": "2026-09-17T00:30:15.7659878-03:00",
+    "comment": "Registrado vía CLI"
+  },
+  {
+    "name": "mi_nodo_principal.ipv7",
+    "did": "did:ipvn7:e93524a43b6487f4d6b0b0881251b5088d06f1ad3c400edd1d26d2eb777e838a",
+    "virtual_ipv6": "fd07::15db:7410:1b19:cc86",
+    "virtual_ipv4": "10.7.21.219",
+    "context_root": "",
+    "assigned_at": "2026-09-17T00:30:15.7659878-03:00",
+    "comment": "Registrado vía CLI"
+  }
+]

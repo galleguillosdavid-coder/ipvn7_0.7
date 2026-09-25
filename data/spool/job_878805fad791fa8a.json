@@ -1,0 +1,12 @@
+{
+  "active_port": 0,
+  "copies": 1,
+  "doc_name": "comprobante_soberano.pdf",
+  "job_id": "job_878805fad791fa8a",
+  "payload_bytes": 952,
+  "print_method": "Sovereign Spooler (Archivo Encolado)",
+  "printed_phys": true,
+  "printer": "Spooler Soberano Local (Virtual / PDF)",
+  "spooled_at": "2026-09-21T02:48:20Z",
+  "target_ip": "127.0.0.1"
+}

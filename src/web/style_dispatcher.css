@@ -1,0 +1,93 @@
+/* ipvn7 Universal Core Dashboard — Dispatcher & Live Events Styles */
+
+.events-log {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-line {
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.log-line.info { color: #94a3b8; }
+.log-line.peer { color: var(--emerald); font-weight: 600; }
+.log-line.tx { color: var(--cyan); }
+.log-line.ztna { color: var(--amber); }
+.log-line.comp { color: var(--purple); font-weight: 600; }
+
+.live-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--rose);
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--rose);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--rose);
+  animation: pulse 1.2s infinite;
+}
+
+.dispatcher-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.flex-1 { flex: 1; }
+
+.dispatcher-form label, .modal-form label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.dispatcher-form input, .dispatcher-form select, .dispatcher-form textarea,
+.modal-form input, .modal-form select {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.dispatcher-form input:focus, .dispatcher-form select:focus, .dispatcher-form textarea:focus,
+.modal-form input:focus, .modal-form select:focus {
+  border-color: var(--cyan);
+}
+
+.full-width { width: 100%; }

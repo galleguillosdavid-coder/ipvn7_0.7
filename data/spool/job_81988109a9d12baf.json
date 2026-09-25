@@ -1,0 +1,12 @@
+{
+  "active_port": 631,
+  "copies": 1,
+  "doc_name": "test.pdf",
+  "job_id": "job_81988109a9d12baf",
+  "payload_bytes": 940,
+  "print_method": "RFC 8011 IPP (Print-Job)",
+  "printed_phys": true,
+  "printer": "http://192.168.1.167:631",
+  "spooled_at": "2026-09-17T10:36:07Z",
+  "target_ip": "192.168.1.167"
+}

@@ -1,0 +1,12 @@
+{
+  "active_port": 631,
+  "copies": 1,
+  "doc_name": "documento_soberano.pdf",
+  "job_id": "job_619dab52f47a46cc",
+  "payload_bytes": 954,
+  "print_method": "RFC 8011 IPP (Print-Job)",
+  "printed_phys": true,
+  "printer": "http://192.168.1.167:631",
+  "spooled_at": "2026-09-17T02:00:40Z",
+  "target_ip": "192.168.1.167"
+}

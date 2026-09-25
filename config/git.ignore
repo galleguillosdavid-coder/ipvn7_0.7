@@ -1,0 +1,37 @@
+# Binaries & Builds
+bin/
+!bin/windows_amd64/
+!bin/linux_amd64/
+*.exe
+*.exe~
+!bin/windows_amd64/*.exe
+*.dll
+*.so
+*.dylib
+
+# Environments & Keys (Zero-PII & Secrets)
+.env
+*.key
+*.keystore
+keystore/
+
+# Kùzu Graph DB persistent directory
+.kuzu_db/
+__pycache__/
+*.pyc
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+scratch/
+data/spool/*.jpg
+data/spool/*.json
+data/local_drop/
+data/storage/
+.agents/task.lock
+.agents/*.csv
+docs/AUTONOMOUS_CYCLE_LOG.md
+docs/VERIFICATION_REPORT.md

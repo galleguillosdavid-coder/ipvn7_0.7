@@ -1,0 +1,12 @@
+{
+  "active_port": 631,
+  "copies": 1,
+  "doc_name": "contrato_ipvn7.pdf",
+  "ipp_details": {},
+  "ipp_protocol": "RFC 8011 (go-ipp v1.7)",
+  "job_id": "job_d5bad9c3958ac89b",
+  "online": false,
+  "printer": "Impresora (192.168.1.46)",
+  "spooled_at": "2026-09-17T01:16:07Z",
+  "target_ip": "192.168.1.46"
+}

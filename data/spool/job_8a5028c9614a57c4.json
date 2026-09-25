@@ -1,0 +1,12 @@
+{
+  "active_port": 9100,
+  "copies": 1,
+  "doc_name": "documento_soberano.pdf",
+  "ipp_details": {},
+  "ipp_protocol": "RFC 8011 (go-ipp v1.7)",
+  "job_id": "job_8a5028c9614a57c4",
+  "online": true,
+  "printer": "http://192.168.1.167:631",
+  "spooled_at": "2026-09-17T01:43:08Z",
+  "target_ip": "192.168.1.167"
+}

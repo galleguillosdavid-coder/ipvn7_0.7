@@ -1,0 +1,175 @@
+/* ipvn7 Plugins Styles (style_plugins.css) - Axioma III: <= 400 líneas */
+
+.plugin-control-card {
+  margin-bottom: 24px;
+  padding: 18px 22px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+}
+
+.plugin-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.plugin-title-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.plugin-icon {
+  font-size: 2rem;
+  background: rgba(30, 41, 59, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.plugin-heading {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plugin-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.plugin-subdesc {
+  margin: 4px 0 0 0;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  max-width: 580px;
+  line-height: 1.4;
+}
+
+.plugin-dual-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-plugin-install, .btn-plugin-power {
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action.danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.btn-action.danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
+.btn-action.accent {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.btn-action.accent:hover {
+  background: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+  border-color: #10b981;
+}
+
+.plugin-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+}
+
+.plugin-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.running {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.status-dot.stopped {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.status-dot.uninstalled {
+  background: #64748b;
+}
+
+.status-label {
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.plugin-meta-info {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.plugin-disabled-overlay {
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed rgba(100, 116, 139, 0.4);
+  border-radius: 12px;
+  margin-top: 16px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.plugin-disabled-content .overlay-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.plugin-disabled-content h4 {
+  font-size: 1.2rem;
+  color: #e2e8f0;
+  margin: 0 0 8px 0;
+}
+
+.plugin-disabled-content p {
+  color: #94a3b8;
+  max-width: 420px;
+  margin: 0 auto 18px auto;
+  font-size: 0.92rem;
+}

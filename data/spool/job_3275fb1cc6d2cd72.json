@@ -1,0 +1,12 @@
+{
+  "active_port": 9100,
+  "copies": 1,
+  "doc_name": "prueba_impresion_soberana.pdf",
+  "job_id": "job_3275fb1cc6d2cd72",
+  "payload_bytes": 1139,
+  "print_method": "RAW JetDirect PCL (Puerto 9100)",
+  "printed_phys": true,
+  "printer": "http://192.168.1.167:631",
+  "spooled_at": "2026-09-21T03:14:10Z",
+  "target_ip": "192.168.1.167"
+}

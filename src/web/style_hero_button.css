@@ -1,0 +1,332 @@
+/* ipvn7 Universal Core — Botón Soberano Hero Zen (style_hero_button.css) */
+/* Axioma III: Límite estricto de 400 líneas */
+
+.hero-zen-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 30px;
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.hero-zen-card {
+  width: 100%;
+  max-width: 680px;
+  background: radial-gradient(circle at 50% 30%, rgba(26, 32, 53, 0.75) 0%, rgba(13, 17, 30, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  padding: 45px 30px 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+}
+
+.hero-zen-card::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  width: 300px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Envoltorio del botón con anillos orbitales */
+.hero-circle-wrapper {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 25px;
+}
+
+.hero-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: all 0.5s ease;
+}
+
+.orbit-outer {
+  width: 248px;
+  height: 248px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  animation: orbitSpin 35s linear infinite;
+}
+
+.orbit-middle {
+  width: 232px;
+  height: 232px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* El botón circular principal con texturas y gradientes */
+.hero-sovereign-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.hero-sovereign-circle:hover {
+  transform: scale(1.035);
+}
+
+.hero-sovereign-circle:active {
+  transform: scale(0.97);
+}
+
+/* Capa de textura radial profunda */
+.circle-texture-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 65% 75%, rgba(0, 0, 0, 0.55) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.circle-inner-ring {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+/* Icono y texto interior */
+.circle-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.circle-power-icon {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.3s ease;
+}
+
+.circle-state-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.circle-mode-subtext {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.5px;
+}
+
+/* ESTADO ROJO: Malla P2P Exclusiva */
+.state-red .hero-sovereign-circle {
+  background: radial-gradient(circle at 45% 40%, #ef4444 0%, #b91c1c 45%, #7f1d1d 85%, #450a0a 100%);
+  box-shadow: 
+    0 0 35px rgba(239, 68, 68, 0.45),
+    0 15px 30px rgba(0, 0, 0, 0.6),
+    inset 0 2px 6px rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(248, 113, 113, 0.6);
+}
+.state-red .orbit-outer {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ESTADO AMARILLO: Conectando / Estableciendo */
+.state-yellow .hero-sovereign-circle {
+  background: radial-gradient(circle at 45% 40%, #fbbf24 0%, #d97706 45%, #92400e 85%, #451a03 100%);
+  box-shadow: 
+    0 0 45px rgba(245, 158, 11, 0.6),
+    0 15px 30px rgba(0, 0, 0, 0.6),
+    inset 0 2px 6px rgba(255, 255, 255, 0.45),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(251, 191, 36, 0.8);
+  animation: pulseYellow 1.6s ease-in-out infinite;
+}
+.state-yellow .orbit-outer {
+  border-color: rgba(245, 158, 11, 0.5);
+  animation-duration: 8s;
+}
+
+/* ESTADO VERDE: Internet Protegido Activo */
+.state-green .hero-sovereign-circle {
+  background: radial-gradient(circle at 45% 40%, #10b981 0%, #059669 45%, #047857 85%, #064e3b 100%);
+  box-shadow: 
+    0 0 50px rgba(16, 185, 129, 0.6),
+    0 15px 30px rgba(0, 0, 0, 0.6),
+    inset 0 2px 6px rgba(255, 255, 255, 0.5),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(52, 211, 153, 0.8);
+}
+.state-green .orbit-outer {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Animaciones */
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseYellow {
+  0% { transform: scale(1); box-shadow: 0 0 30px rgba(245, 158, 11, 0.45); }
+  50% { transform: scale(1.025); box-shadow: 0 0 60px rgba(245, 158, 11, 0.85); }
+  100% { transform: scale(1); box-shadow: 0 0 30px rgba(245, 158, 11, 0.45); }
+}
+
+/* Información de Estado Debajo del Botón */
+.hero-status-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.hero-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.badge-yellow {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fde68a;
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+
+.hero-status-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.badge-red .dot { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.badge-yellow .dot { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+.badge-green .dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+.hero-status-desc {
+  font-size: 13px;
+  color: var(--text-muted, #94a3b8);
+  max-width: 480px;
+  line-height: 1.45;
+}
+
+.hero-proxy-details {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+/* Botón de Expansión / Colapso del Ecosistema */
+.btn-toggle-ecosystem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 10px 22px;
+  border-radius: 16px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-toggle-ecosystem:hover {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.35);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.btn-toggle-ecosystem .chevron-icon {
+  transition: transform 0.35s ease;
+}
+
+.btn-toggle-ecosystem.expanded .chevron-icon {
+  transform: rotate(180deg);
+}
+
+/* Contenedor del Panel Avanzado (Colapsable) */
+.advanced-ecosystem-panel {
+  width: 100%;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.advanced-ecosystem-panel.collapsed {
+  display: none;
+  opacity: 0;
+  max-height: 0;
+}
+
+.advanced-ecosystem-panel.expanded {
+  display: block;
+  opacity: 1;
+  max-height: 10000px;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
