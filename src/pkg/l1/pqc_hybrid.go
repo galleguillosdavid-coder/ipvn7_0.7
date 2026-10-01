@@ -22,20 +22,22 @@ import (
 
 const (
 	// Algoritmos canónicos de ipvn7 PQC
-	// NOTA TÉCNICA: La firma primaria de autenticidad en producción es Ed25519 pura estándar.
-	// ML-DSA es una extensión experimental preliminar hasta la estabilización de FIPS 204.
-	HybridSigAlgorithm = "Ed25519+ML-DSA-Experimental"
+	// NOTA TÉCNICA: La firma primaria de autenticidad en producción es Ed25519 pura estándar (RFC 8032).
+	// El vector reticular adjunto es un compromiso experimental derivado por semilla; NO es NIST FIPS 204 ML-DSA.
+	HybridSigAlgorithm = "Ed25519+ExperimentalVector"
 	HybridKEMAlgorithm = "X25519+ML-KEM-768"
 	XWingAlgorithm     = "X-Wing (X25519+ML-KEM-768)"
 	XWingLabel         = "\\..^" // 0x5c 0x2e 0x2e 0x5e RFC/IETF CFRG
 
 	// Longitudes canónicas
-	MLDSA65SeedSize     = 32
-	MLDSA65SigSize      = 128
-	MLKEM768CipherSize  = 128
-	SharedSecretSize    = 32
-	XWingPublicKeySize  = 1216 // 1184 (ML-KEM-768) + 32 (X25519)
-	XWingCiphertextSize = 1120 // 1088 (ML-KEM-768) + 32 (ephemeral X25519)
+	ExperimentalSigSeedSize = 32
+	ExperimentalSigSize     = 128
+	MLDSA65SeedSize         = ExperimentalSigSeedSize // alias retrocompatible
+	MLDSA65SigSize          = ExperimentalSigSize     // alias retrocompatible
+	MLKEM768CipherSize      = 128
+	SharedSecretSize        = 32
+	XWingPublicKeySize      = 1216 // 1184 (ML-KEM-768) + 32 (X25519)
+	XWingCiphertextSize     = 1120 // 1088 (ML-KEM-768) + 32 (ephemeral X25519)
 )
 
 // HybridKeyPair encapsula claves clásicas y post-cuánticas en un único par soberano
@@ -56,11 +58,12 @@ type HybridKeyPair struct {
 	PQCSignSeed []byte `json:"-"`
 	PQCKEMSeed  []byte `json:"-"`
 
-	Ed25519PubHex string    `json:"ed25519_pub_hex"`
-	X25519PubHex  string    `json:"x25519_pub_hex"`
-	MLDSAPubHex   string    `json:"ml_dsa_pub_hex"`
-	MLKEMPubHex   string    `json:"ml_kem_pub_hex"`
-	CreatedAt     time.Time `json:"created_at"`
+	Ed25519PubHex           string    `json:"ed25519_pub_hex"`
+	X25519PubHex            string    `json:"x25519_pub_hex"`
+	ExperimentalPQCIdentity string    `json:"experimental_pqc_identity"`
+	MLDSAPubHex             string    `json:"ml_dsa_pub_hex,omitempty"` // alias documental retrocompatible
+	MLKEMPubHex             string    `json:"ml_kem_pub_hex"`
+	CreatedAt               time.Time `json:"created_at"`
 }
 
 // HybridKEMCiphertext contiene la encapsulación de clave compartida
@@ -85,31 +88,33 @@ func GenerateHybridKeyPair(did string) (*HybridKeyPair, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error generando ML-KEM-768: %w", err)
 	}
-	pqcSignSeed := make([]byte, MLDSA65SeedSize)
+	pqcSignSeed := make([]byte, ExperimentalSigSeedSize)
 	if _, err := io.ReadFull(rand.Reader, pqcSignSeed); err != nil {
-		return nil, fmt.Errorf("error semilla ML-DSA: %w", err)
+		return nil, fmt.Errorf("error semilla experimental: %w", err)
 	}
-	hDSA := sha256.New()
-	hDSA.Write([]byte("ML-DSA-65-PUBLIC-MATRIX-DERIVATION"))
-	hDSA.Write(pqcSignSeed)
+	hExp := sha256.New()
+	hExp.Write([]byte("IPVN7-EXPERIMENTAL-PQC-IDENTITY"))
+	hExp.Write(pqcSignSeed)
+	expIDHex := hex.EncodeToString(hExp.Sum(nil))
 	xPub := xPriv.PublicKey()
 	mlkemEncaps := mlkemDecaps.EncapsulationKey()
 
 	return &HybridKeyPair{
-		DID:               did,
-		ClassicalSignPub:  edPub,
-		ClassicalSignPriv: edPriv,
-		ClassicalKEMPub:   xPub,
-		ClassicalKEMPriv:  xPriv,
-		MLKEMDecapsKey:    mlkemDecaps,
-		MLKEMEncapsKey:    mlkemEncaps,
-		PQCSignSeed:       pqcSignSeed,
-		PQCKEMSeed:        mlkemDecaps.Bytes(),
-		Ed25519PubHex:     hex.EncodeToString(edPub),
-		X25519PubHex:      hex.EncodeToString(xPub.Bytes()),
-		MLDSAPubHex:       hex.EncodeToString(hDSA.Sum(nil)),
-		MLKEMPubHex:       hex.EncodeToString(mlkemEncaps.Bytes()),
-		CreatedAt:         time.Now().UTC(),
+		DID:                     did,
+		ClassicalSignPub:        edPub,
+		ClassicalSignPriv:       edPriv,
+		ClassicalKEMPub:         xPub,
+		ClassicalKEMPriv:        xPriv,
+		MLKEMDecapsKey:          mlkemDecaps,
+		MLKEMEncapsKey:          mlkemEncaps,
+		PQCSignSeed:             pqcSignSeed,
+		PQCKEMSeed:              mlkemDecaps.Bytes(),
+		Ed25519PubHex:           hex.EncodeToString(edPub),
+		X25519PubHex:            hex.EncodeToString(xPub.Bytes()),
+		ExperimentalPQCIdentity: expIDHex,
+		MLDSAPubHex:             expIDHex,
+		MLKEMPubHex:             hex.EncodeToString(mlkemEncaps.Bytes()),
+		CreatedAt:               time.Now().UTC(),
 	}, nil
 }
 

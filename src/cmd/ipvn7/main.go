@@ -224,8 +224,13 @@ func main() {
 			case l0.MsgTypeRoamingUpdate:
 				if packet.SourceDID != identity.DID() {
 					if valid, err := packet.VerifyPacketSignature(); err == nil && valid {
+						decision, reason := firewall.EvaluateInbound(packet.SourceDID, uint16(*listenPort))
+						if decision != l1.DecisionAccept {
+							telemetry.RecordEvent(l2.EventDrop, uint32(n), 0, 0)
+							core.LogWarn("[ZTNA DENEGADO] RoamingUpdate no autorizado para %s: %s", packet.SourceDID, reason)
+							continue
+						}
 						if isUDP { _ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.1) }
-						firewall.AuthorizeDID(&l1.DIDPolicy{DID: packet.SourceDID, AllowInbound: true, AllowOutbound: true, AllowRelay: true})
 						respPkt := l0.NewPacket(l0.MsgTypeKeepAlive, identity.DID(), packet.SourceDID, 0, nil, nil)
 						if raw, err := respPkt.Encode(); err == nil { _, _ = conn.WriteTo(raw, fromAddr) }
 					}

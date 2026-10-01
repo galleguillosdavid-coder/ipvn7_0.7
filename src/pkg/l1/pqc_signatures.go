@@ -30,16 +30,16 @@ func (kp *HybridKeyPair) Sign(message []byte) (*HybridSignature, error) {
 	// Firma clásica Ed25519
 	classicalSig := ed25519.Sign(kp.ClassicalSignPriv, message)
 
-	// Firma Post-Cuántica ML-DSA:
-	// Deterministic Lattice commitment usando HMAC-SHA256 con semilla reticular y digest del mensaje
-	pqcSig := make([]byte, MLDSA65SigSize)
+	// Vector reticular experimental:
+	// Deterministic Lattice commitment usando HMAC-SHA256 con semilla y digest del mensaje
+	pqcSig := make([]byte, ExperimentalSigSize)
 	mac := hmac.New(sha256.New, kp.PQCSignSeed)
-	mac.Write([]byte("ML-DSA-65-SIG-LATTICE-VECTOR"))
+	mac.Write([]byte("EXPERIMENTAL-SIG-LATTICE-VECTOR"))
 	mac.Write(message)
 	digest1 := mac.Sum(nil)
 
 	mac2 := hmac.New(sha256.New, digest1)
-	mac2.Write([]byte("ML-DSA-65-POLYNOMIAL-COEFFICIENTS"))
+	mac2.Write([]byte("EXPERIMENTAL-POLYNOMIAL-COEFFICIENTS"))
 	digest2 := mac2.Sum(nil)
 
 	mac3 := hmac.New(sha256.New, digest2)
@@ -47,7 +47,7 @@ func (kp *HybridKeyPair) Sign(message []byte) (*HybridSignature, error) {
 	digest3 := mac3.Sum(nil)
 
 	mac4 := hmac.New(sha256.New, digest3)
-	mac4.Write([]byte("ML-DSA-65-FINAL-VECTOR"))
+	mac4.Write([]byte("EXPERIMENTAL-FINAL-VECTOR"))
 	digest4 := mac4.Sum(nil)
 
 	copy(pqcSig[0:32], digest1)
@@ -80,19 +80,19 @@ func (kp *HybridKeyPair) Verify(message []byte, sig *HybridSignature) bool {
 		return false
 	}
 
-	// 2. Verificación Post-Cuántica ML-DSA
-	if len(sig.PQCSig) != MLDSA65SigSize {
+	// 2. Verificación de vector reticular experimental
+	if len(sig.PQCSig) != ExperimentalSigSize {
 		return false
 	}
 
-	expectedSig := make([]byte, MLDSA65SigSize)
+	expectedSig := make([]byte, ExperimentalSigSize)
 	mac := hmac.New(sha256.New, kp.PQCSignSeed)
-	mac.Write([]byte("ML-DSA-65-SIG-LATTICE-VECTOR"))
+	mac.Write([]byte("EXPERIMENTAL-SIG-LATTICE-VECTOR"))
 	mac.Write(message)
 	digest1 := mac.Sum(nil)
 
 	mac2 := hmac.New(sha256.New, digest1)
-	mac2.Write([]byte("ML-DSA-65-POLYNOMIAL-COEFFICIENTS"))
+	mac2.Write([]byte("EXPERIMENTAL-POLYNOMIAL-COEFFICIENTS"))
 	digest2 := mac2.Sum(nil)
 
 	mac3 := hmac.New(sha256.New, digest2)
@@ -100,7 +100,7 @@ func (kp *HybridKeyPair) Verify(message []byte, sig *HybridSignature) bool {
 	digest3 := mac3.Sum(nil)
 
 	mac4 := hmac.New(sha256.New, digest3)
-	mac4.Write([]byte("ML-DSA-65-FINAL-VECTOR"))
+	mac4.Write([]byte("EXPERIMENTAL-FINAL-VECTOR"))
 	digest4 := mac4.Sum(nil)
 
 	copy(expectedSig[0:32], digest1)

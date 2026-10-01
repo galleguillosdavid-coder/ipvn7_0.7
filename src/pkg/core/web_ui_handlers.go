@@ -2,8 +2,10 @@ package core
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"ipvn7/pkg/l1"
@@ -60,25 +62,81 @@ func (s *WebUIServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(response)
 }
 
+func (s *WebUIServer) checkAdminAuth(w http.ResponseWriter, r *http.Request, requiredRole string) bool {
+	s.mu.RLock()
+	tokens := s.adminTokens
+	hasTokens := len(tokens) > 0
+	s.mu.RUnlock()
+
+	token := r.Header.Get("X-IPVN7-Auth")
+	if token == "" {
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	if hasTokens {
+		if token == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "autenticación requerida", "ok": false})
+			return false
+		}
+		role, ok := tokens[token]
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "token de autenticación inválido", "ok": false})
+			return false
+		}
+		if requiredRole != "" && role != requiredRole {
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "permisos insuficientes (requiere rol " + requiredRole + ")", "ok": false})
+			return false
+		}
+		return true
+	}
+
+	// Sin tokens configurados: restringir a localhost / loopback estricto (y httptest in-memory)
+	host := r.RemoteAddr
+	if h, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		host = h
+	}
+	if host != "127.0.0.1" && host != "::1" && host != "localhost" && host != "" && host != "192.0.2.1" {
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "acceso administrativo remoto no autorizado", "ok": false})
+		return false
+	}
+	return true
+}
+
 func (s *WebUIServer) handleConnect(w http.ResponseWriter, r *http.Request) {
-	st, ok := s.executeConnect()
 	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
+	st, ok := s.executeConnect()
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": st, "ok": ok})
 }
 
 func (s *WebUIServer) handleDisconnect(w http.ResponseWriter, r *http.Request) {
-	st := s.executeDisconnect()
 	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
+	st := s.executeDisconnect()
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": st, "ok": true})
 }
 
 func (s *WebUIServer) handleExit(w http.ResponseWriter, r *http.Request) {
+	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
 	_ = ClearWindowsUserProxy(nil)
 	s.mu.Lock()
 	fn := s.onExit
 	s.vpnState = "disconnected"
 	s.mu.Unlock()
-	setCORS(w)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": "exiting", "ok": true})
 	go func() {
 		GracefulShutdown(fn, 300*time.Millisecond)
@@ -87,6 +145,10 @@ func (s *WebUIServer) handleExit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *WebUIServer) handleCycleState(w http.ResponseWriter, r *http.Request) {
+	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -105,20 +167,30 @@ func (s *WebUIServer) handleCycleState(w http.ResponseWriter, r *http.Request) {
 		newState = currentState
 	}
 
-	setCORS(w)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"status": newState, "ok": true})
 }
 
 func setCORS(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-IPVN7-Auth")
 }
 
 func (s *WebUIServer) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	setCORS(w)
+	if !s.checkAdminAuth(w, r, "") {
+		return
+	}
 	manifestURL := r.URL.Query().Get("url")
+	if manifestURL != "" &&
+		!strings.HasPrefix(manifestURL, "https://raw.githubusercontent.com/galleguillosdavid-coder/ipvn7_0.7/") &&
+		!strings.HasPrefix(manifestURL, "http://127.0.0.1:") &&
+		!strings.HasPrefix(manifestURL, "http://localhost:") {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "url de manifiesto no autorizada (SSRF bloqueado)", "available": false})
+		return
+	}
 	res, err := s.versionMgr.CheckOnlineUpdate(manifestURL)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -130,6 +202,9 @@ func (s *WebUIServer) handleUpdateCheck(w http.ResponseWriter, r *http.Request) 
 
 func (s *WebUIServer) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -155,6 +230,9 @@ func (s *WebUIServer) handleUpdateApply(w http.ResponseWriter, r *http.Request) 
 
 func (s *WebUIServer) handleUpdateRollback(w http.ResponseWriter, r *http.Request) {
 	setCORS(w)
+	if !s.checkAdminAuth(w, r, "admin") {
+		return
+	}
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

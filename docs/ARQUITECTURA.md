@@ -108,37 +108,28 @@ UDP Socket
 
 ---
 
-## 5. Desacoplamiento Estructural: Core vs Adapters (Fase 9)
+## 5. Estructura Real del Repositorio y Desacoplamiento (Auditoría Externa)
 
-El repositorio delimita estrictamente el código central inmutable (Core) de los adaptadores de entorno y componentes experimentales:
+El repositorio organiza el código fuente en paquetes atómicos y modulares en estricta correspondencia con los estratos arquitectónicos:
 
 ```text
 src/
-├── core/ (L0 / Primitivas Puras)
-│   ├── packet/        ──► Formato de trama CBOR canónico y Magic Bytes
-│   ├── identity/      ──► Criptografía Ed25519 y DIDs did:ipvn7:<pubkey>
-│   ├── session/       ──► Handshake 1-RTT y derivación de claves simétricas
-│   ├── replay/        ──► Ventana deslizante y filtros anti-replay
-│   ├── crypto/        ──► NIST FIPS 203 ML-KEM-768 y ChaCha20-Poly1305
-│   └── mtu/           ──► Invariante estricto de frontera 1280B determinista
+├── cmd/
+│   ├── ipvn7/          ──► Daemon principal de nodo de red soberano
+│   ├── installer/      ──► Instalador GUI Windows 1-clic (build tag: windows && installer)
+│   └── ipvn7-wasm/     ──► Módulo de compilación WebAssembly / navegador
 │
-├── routing/ (L1 Topológico)
-│   └── kleinberg/     ──► Anillos concéntricos, métricas de latencia y distancia XOR
-│
-├── adapters/ (Entorno y Red Externa)
-│   ├── udp/           ──► Socket real I7UDPAdapter y transporte físico
-│   ├── tun/           ──► Wintun en Windows / /dev/net/tun en Linux
-│   ├── socks5/        ──► Pasarela SOCKS5 local sin privilegios
-│   └── stun/          ──► Descubrimiento reflexivo de IP:puerto WAN
-│
-└── experimental/ (Prototipos y Extensiones)
-    ├── xdp/           ──► Aceleración eBPF/XDP en Linux
-    └── experimental_pqc/ ──► Vector reticular experimental (ML-DSA no certificado)
+└── pkg/
+    ├── l0/             ──► Primitivas puras (Identity, Packet CBOR, ML-KEM-768 FIPS 203, Wire)
+    ├── l1/             ──► Enrutamiento Kleinberg, Sesiones PQC 1-RTT, ZTNA Firewall, Adaptadores (UDP, TUN, SOCKS5, STUN)
+    ├── l2/             ──► Telemetría y métricas vitales protegidas concurrentemente con RWMutex
+    ├── core/           ──► Pipeline lineal zero-copy (0 B/op), FSM, WebUI (127.0.0.1) y VersionManager
+    └── wasm/           ──► Puente JS / WebAssembly
 ```
 
 ---
 
-## 6. Mecanismos de Descubrimiento de Red (Fase 10)
+## 6. Mecanismos de Descubrimiento de Red
 
 Bajo el axioma *"La red escucha, no grita"*, se formalizan tres mecanismos diferenciados con control estricto de broadcast:
 
@@ -151,4 +142,20 @@ Bajo el axioma *"La red escucha, no grita"*, se formalizan tres mecanismos difer
 3. **Rendezvous Ciego y STUN Reflexivo (EBRA / Blind Store):**
    - **Estado:** Activado según configuración.
    - **Comportamiento:** Los nodos publican balizas ciegas cifradas con clave efímera en relays o servidores de almacenamiento ciego sin revelar su topología interna, y utilizan STUN reflexivo estándar (RFC 5389) para conocer su mapeo externo ante NATs.
+
+---
+
+## 7. Matriz Canónica: Función → Archivo → Test → Evidencia
+
+| Estrato / Función | Archivo de Implementación | Suite de Tests | Evidencia Demostrada |
+| :--- | :--- | :--- | :--- |
+| **Identidad Soberana (Ed25519)** | `src/pkg/l0/identity.go` | `src/pkg/l0/identity_test.go` | DID criptográfico autocertificable, firma y verificación |
+| **Criptografía PQC (ML-KEM-768)** | `src/pkg/l0/pqc_kem.go` | `src/pkg/l0/pqc_kem_test.go` | NIST FIPS 203 real (`crypto/mlkem`), decapsulación e implicit rejection |
+| **Firewall ZTNA Default-Deny** | `src/pkg/l1/firewall.go` | `src/pkg/l1/roaming_ztna_test.go` | Rechazo estricto de RoamingUpdate no autorizado incluso con firma válida |
+| **Sesiones PQC 1-RTT** | `src/pkg/l1/session_manager.go` | `src/pkg/l1/session_adversarial_test.go` | Tests A-H: mitigación total de suplantación, descarte de replay |
+| **Enrutador Kleinberg (16 anillos)** | `src/pkg/l1/routing.go` | `src/pkg/l1/l1_test.go` | Enrutamiento voraz por distancia XOR y latencia EWMA |
+| **Pipeline Zero-Copy (0 B/op)** | `src/pkg/core/pipeline_stages.go`| `src/pkg/core/pipeline_bench_test.go` | 34.9 ns/op, 0 B/op, 0 allocs/op en `BenchmarkLinearPipeline_Execute` |
+| **Web UI Localhost & Control Admin** | `src/pkg/core/web_ui_handlers.go` | `src/pkg/core/web_ui_admin_auth_test.go`| Bind 127.0.0.1, auth token RBAC, CORS sin comodín, SSRF mitigado |
+| **Instalador Autocontenido** | `src/cmd/installer/main.go` | `scripts/build_installer.ps1` | Build tag `windows && installer`, zero-admin y auto-elevación UAC |
+
 

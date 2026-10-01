@@ -28,8 +28,9 @@ const (
 
 // Constantes de Algoritmo en BindingRecord
 const (
-	BindingAlgoEd25519 = 0x01
-	BindingAlgoMLDSA65 = 0x02
+	BindingAlgoEd25519         = 0x01
+	BindingAlgoExperimentalSig = 0x02
+	BindingAlgoMLDSA65         = BindingAlgoExperimentalSig // alias documental retrocompatible
 )
 
 // Ámbitos de autorización (Scope)

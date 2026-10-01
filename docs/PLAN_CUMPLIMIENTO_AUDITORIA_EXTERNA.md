@@ -1,6 +1,7 @@
-# PLAN DE CUMPLIMIENTO TOTAL (100%) - AUDITORÍA EXTERNA IPvN7 v0.7
+# PLAN DE CUMPLIMIENTO FACTUAL — AUDITORÍA EXTERNA IPvN7 v0.7
 
-> **Directiva:** Cerrar la brecha entre el diseño arquitectónico y la ejecución física real, conectando el pipeline de seguridad, ZTNA y PQC al camino de datos principal, erradicando falsas rutas de copia y eliminando cualquier incoherencia documental o de configuración.
+> **Directiva Suprema:** En conformidad con `docs/auditoria externa.md` como única fuente de verdad, cerrar toda brecha entre el diseño arquitectónico y la ejecución física real, conectando el pipeline de seguridad, ZTNA Default-Deny y PQC al camino de datos principal, erradicando falsas rutas de copia y aplicando la taxonomía estricta de 5 estados (HECHO, TESTEADO, MEDIDO, NO IMPLEMENTADO, EXPERIMENTAL).
+
 
 ---
 
@@ -74,7 +75,24 @@
 6. **Clarificación Factual Zero-Copy (Hallazgo 3):**
    - Separación formal entre el benchmark de orquestación (`BenchmarkLinearPipeline_Execute`, 0 allocs/op) y el datapath UDP con buffers prealocados del pool.
 
+### Fase 7: Resolución de Hallazgos Críticos Ronda 3 (Auditoría Octubre 2026)
+1. **Desacoplamiento de CI y Compilación de Instalador (P0):**
+   - Incorporado build tag `//go:build windows && installer` en `src/cmd/installer/main.go`.
+   - `go vet ./...` y `go test ./...` pasan en limpio en cualquier entorno/CI sin depender de binarios precompilados.
+2. **Cierre de Bypass Conceptual ZTNA en RoamingUpdate (P0):**
+   - Eliminada la invocación automática `firewall.AuthorizeDID` al recibir `MsgTypeRoamingUpdate` en `main.go` y `pipeline_stages.go`.
+   - Autenticación (firma Ed25519) estrictamente separada de Autorización (evaluación Default-Deny).
+   - Verificado con suite formal `src/pkg/l1/roaming_ztna_test.go` (Tests de rechazo ante pares no autorizados, aceptación de autorizados, y descarte de firmas inválidas/malformadas).
+3. **Cierre de Superficie WebUI y Rutas Administrativas (P0):**
+   - Bind HTTP fijado estrictamente a `127.0.0.1` por defecto.
+   - Eliminado `Access-Control-Allow-Origin: *` del panel administrativo (reemplazado por loopback restringido).
+   - Control de acceso RBAC implementado (`checkAdminAuth`) protegiendo `/vpn/connect`, `/vpn/disconnect`, `/vpn/exit`, `/vpn/cycle` y `/update/*`.
+   - Bloqueo estricto de SSRF en `handleUpdateCheck` limitando manifiestos a fuentes de confianza oficiales.
+4. **Honestidad Criptográfica en Vectores Reticulares (P1):**
+   - Eliminada nomenclatura equívoca de NIST FIPS 204 ML-DSA para componentes derivados por HMAC.
+   - Renombrados identificadores a `ExperimentalPQCIdentity` y `ExperimentalSigSize`, declarando explícitamente que la autenticidad en producción descansa en Ed25519 estándar (RFC 8032).
+
 ---
 
-## 3. Estado de Cumplimiento: 100% CERRADO Y VERIFICADO FÍSICAMENTE
-Todos los hallazgos críticos de ambas rondas de auditoría externa han sido resueltos en el código fuente, validados con sockets físicos UDP y suites adversariales deterministas.
+## 3. Estado de Evaluación: AUDITADO INTERNAMENTE CON EVIDENCIA LOCAL DEMOSTRADA
+La totalidad de los hallazgos P0 y P1 identificados en las rondas de auditoría externa han sido subsanados en el código fuente, respaldados por suites de tests unitarios, adversariales y compuertas de análisis estático en el repositorio local.

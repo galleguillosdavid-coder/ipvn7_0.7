@@ -178,13 +178,11 @@ func (s *TopologyFSMStage) Process(ctx context.Context, pCtx *interfaces.PacketC
 
 	if pkt.Type == l0.MsgTypeRoamingUpdate {
 		if udpAddr, ok := pCtx.RemoteAddr.(*net.UDPAddr); ok {
+			decision, reason := s.firewall.EvaluateInbound(pCtx.SourceDID, 0)
+			if decision != l1.DecisionAccept {
+				return fmt.Errorf("roaming update desestimado: DID %s no autorizado por ZTNA (%s)", pCtx.SourceDID, reason)
+			}
 			if err := s.router.HandleRoamingUpdate(pkt, udpAddr); err == nil {
-				s.firewall.AuthorizeDID(&l1.DIDPolicy{
-					DID:           pCtx.SourceDID,
-					AllowInbound:  true,
-					AllowOutbound: true,
-					AllowRelay:    true,
-				})
 				if s.gateway != nil {
 					s.gateway.PublishEvent(MeshEvent{
 						Type:      EventPeerJoined,

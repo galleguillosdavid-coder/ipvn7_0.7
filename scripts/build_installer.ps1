@@ -47,7 +47,7 @@ try {
     $env:CGO_ENABLED = "0"
     $env:GOOS = "windows"
     $env:GOARCH = "amd64"
-    go build -trimpath -ldflags="-H=windowsgui -s -w" -o $OutputFile ./cmd/installer
+    go build -trimpath -tags installer -ldflags="-H=windowsgui -s -w" -o $OutputFile ./cmd/installer
     Write-Host " [OK] Instalador compilado con exito." -ForegroundColor Green
 } finally {
     $env:CGO_ENABLED = ""

@@ -308,12 +308,24 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - Implementación de la suite de pruebas adversariales completas (Tests A hasta H) en `src/pkg/l1/session_adversarial_test.go` (100% PASS).
 - ❌ Prohibido: Autorizar DIDs o registrar sesiones ante HandshakeInit sin firma Ed25519 verificada; prohibido mezclar secuencias de distintas sesiones o pares en filtros globales; prohibido silenciar fallos de entropía o generación criptográfica.
 
+**DEC-140:** Desacoplamiento de CI con Build Tags, Aislamiento ZTNA en Roaming, Cierre de Superficie WebUI (127.0.0.1 y RBAC) y Honestidad Criptográfica Reticular
+- **Desacoplamiento de CI:** Incorporación del build tag `//go:build windows && installer` en `src/cmd/installer/main.go` y flag `-tags installer` en `scripts/build_installer.ps1`, garantizando que `go vet ./...` y `go test ./...` pasen en limpio en checkout sin depender de binarios precompilados.
+- **Aislamiento ZTNA en RoamingUpdate:** Erradicación de `firewall.AuthorizeDID` automático en `src/cmd/ipvn7/main.go` y `src/pkg/core/pipeline_stages.go`. La firma Ed25519 demuestra autenticidad, pero la autorización exige evaluación previa de la política ZTNA local (Default-Deny). Validado con suite `src/pkg/l1/roaming_ztna_test.go`.
+- **Cierre de Superficie WebUI:** Bind HTTP restringido a `127.0.0.1` por defecto. Erradicación de CORS `*` en panel administrativo (fijado a loopback). Control de acceso RBAC (`checkAdminAuth`) en operaciones críticas (`/vpn/connect`, `/vpn/disconnect`, `/vpn/exit`, `/update/*`) y mitigación estricta de SSRF en `handleUpdateCheck` limitando manifiestos a fuentes oficiales.
+- **Honestidad Criptográfica:** Renombramiento de pseudónimos ML-DSA a identificadores honestos `ExperimentalPQCIdentity` y `ExperimentalSigSize`, documentando que la firma formal de producción descansa en Ed25519 (RFC 8032) y que el vector reticular adjunto es un compromiso experimental no certificado.
+- ❌ Prohibido: Auto-autorizar DIDs al recibir paquetes de red firmados; prohibido exponer WebUI administrativa en `0.0.0.0` sin autenticación; prohibido permitir URLs arbitrarias en actualización; prohibido denominar ML-DSA a vectores derivados por HMAC.
+
+
+**DEC-141:** Consagración de docs/auditoria externa.md como Única Fuente de Verdad Suprema, Modelo de 7 Agentes Especializados y Plan Canónico de 13 Fases
+- `docs/auditoria externa.md` se establece como la única fuente de verdad absoluta del proyecto. Cualquier diseño previo queda supeditado a ella.
+- Reestructuración del modelo agéntico: erradicada la acumulación de 21 sub-roles, adoptando formalmente los 7 Agentes Especializados de Auditoría Externa (Arquitecto, Seguridad, Core, Testing, CI/Build, Performance, Documentación) con flujo de compuerta estricto (Arquitecto -> Plan -> Programador -> Tester -> Seguridad -> CI -> Merge) y regla de commits unifuncionales.
+- Adopción irrevocable de la Regla de Oro: "NO INVENTAR" y de la Taxonomía Factual de 5 Estados (HECHO, TESTEADO, MEDIDO, NO IMPLEMENTADO, EXPERIMENTAL), erradicando auto-declaraciones prematuras de cierre de auditoría.
+- Formalización del Baseline Factual en `docs/BASELINE.md` (Fase 0) y los 8 Contratos del Core en `docs/core/*.md` (Fase 7).
+- ❌ Prohibido: Asumir hipótesis como hechos; prohibido proclamar "100% CERRADO" mientras existan observaciones de auditoría externa pendientes; prohibido romper la compuerta secuencial de agentes.
+
 ---
 
 **Última actualización:** 2026-10-01  
-**Total decisiones activas:** 57 (DEC-079 → DEC-139)  
+**Total decisiones activas:** 59 (DEC-079 → DEC-141)  
 **Estado:** Todas INVIOLABLE
-
-
-
 

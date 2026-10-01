@@ -27,9 +27,16 @@ type WebUIServer struct {
 	startTime    time.Time
 	deviceName   string
 	vpnState     string // "disconnected", "connecting", "connected"
+	adminTokens  map[string]string // token -> rol ("admin", "viewer")
 	onConnect    func() error
 	onDisconnect func() error
 	onExit       func()
+}
+
+func (s *WebUIServer) SetAdminTokens(tokens map[string]string) {
+	s.mu.Lock()
+	s.adminTokens = tokens
+	s.mu.Unlock()
 }
 
 func (s *WebUIServer) SetShadowRegistry(reg *l1.ShadowDeviceRegistry) {
@@ -84,7 +91,7 @@ func StartWebUI(port int, id *l0.Identity, router *l1.KleinbergRouter, gw *l1.SO
 	mux.HandleFunc("/guide", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/guide/", http.StatusMovedPermanently)
 	})
-	s.server = &http.Server{Addr: fmt.Sprintf("0.0.0.0:%d", port), Handler: mux, ReadTimeout: 5 * time.Second, WriteTimeout: 10 * time.Second}
+	s.server = &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", port), Handler: mux, ReadTimeout: 5 * time.Second, WriteTimeout: 10 * time.Second}
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Fprintf(os.Stderr, "[ERROR WEB] No se pudo abrir servidor HTTP en puerto %d: %v\n", port, err)

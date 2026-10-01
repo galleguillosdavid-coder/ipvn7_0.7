@@ -67,6 +67,7 @@ func TestLinearPipeline_SuccessFlow(t *testing.T) {
 
 	router := l1.NewKleinbergRouter(localID)
 	fw := l1.NewZTNAFirewall(true)
+	fw.AuthorizeDID(&l1.DIDPolicy{DID: peerID.DID(), AllowInbound: true})
 	qos := l1.NewQoSManager()
 	fsm := NewDeterministicNodeFSM(interfaces.NodeStateDisconnected)
 

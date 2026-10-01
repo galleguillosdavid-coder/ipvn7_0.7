@@ -121,6 +121,10 @@ func VerifyFileSHA256(filePath, expectedHex string) error {
 func (vm *VersionManager) CheckOnlineUpdate(manifestURL string) (*UpdateCheckResult, error) {
 	if manifestURL == "" {
 		manifestURL = DefaultUpdateManifestURL
+	} else if !strings.HasPrefix(manifestURL, "https://raw.githubusercontent.com/galleguillosdavid-coder/ipvn7_0.7/") &&
+		!strings.HasPrefix(manifestURL, "http://127.0.0.1:") &&
+		!strings.HasPrefix(manifestURL, "http://localhost:") {
+		return nil, errors.New("url de manifiesto no autorizada: solo se permiten fuentes oficiales de confianza")
 	}
 	client := &http.Client{Timeout: 6 * time.Second}
 	resp, err := client.Get(manifestURL)

@@ -1,290 +1,325 @@
 audita revisa 
 galleguillosdavid-coder/ipvn7_0.7
 
-Sí. Audité el HEAD actual de main del repositorio `galleguillosdavid-coder/ipvn7_0.7`, commit f1a1308 del 1 de octubre de 2026.
+Sí. Hice una auditoría directa del repositorio galleguillosdavid-coder/ipvn7_0.7, incluyendo código, arquitectura, seguridad, CI, tests y documentación.
 
-Mi conclusión es bastante clara:
+Repositorio IPVN7 0.7
 
-El proyecto tiene una base técnica real y bastante trabajo implementado, pero yo NO consideraría todavía que el núcleo de seguridad IPvN7 v0.7 esté cerrado.
+Resultado ejecutivo
 
-Encontré al menos 2 problemas de seguridad críticos, además de varias pruebas que certifican componentes aislados pero no el camino de datos completo.
+Estado real al 1 de octubre de 2026: NO está cerrado.
 
-1. Hallazgo crítico: el HandshakeInit permite suplantar un DID
+Hay bastante trabajo real y varias mejoras importantes, pero encontré fallos críticos que contradicen algunas afirmaciones de “100% PASS / cierre de auditoría”.
 
-Este es el problema más importante.
+Mi clasificación:
 
-En session_manager.go, HandleHandshakeInitPacket() recibe:
+Área	Estado
+Núcleo criptográfico ML-KEM-768	🟢 Implementación real
+Ed25519/X25519/ChaCha20-Poly1305	🟢 Implementado
+Anti-replay L1	🟢 Implementado
+Tests adversariales	🟢 Existen
+MTU 1280	🟢 Bien encaminado
+Arquitectura	🟡 Demasiado grande/mezclada
+CI	🔴 Falla actualmente
+ZTNA	🔴 Hay bypass conceptual en main.go
+Web UI/API	🔴 Control remoto sin autenticación
+SOCKS5	🟠 Funcional, pero aumenta superficie de ataque
+Instalador Windows	🔴 No compila desde el repositorio actual
+Claims de auditoría	🔴 Más fuertes que la evidencia actual
+1. 🔴 P0 — El CI actual está roto
 
-SourceDID
+Esto es objetivo y reproducible.
 
-pero no verifica una firma de ese paquete antes de usarlo.
+El último commit:
 
-Después hace:
+5c0189b79a24ebb1b90dff76760b53ae57896b5b
 
-Respond1RTT(...)
+ejecutó GitHub Actions y terminó:
 
-y luego:
+FAILURE
 
-m.sessions[pkt.SourceDID] = sessionKeys
+El job ni siquiera llegó a los tests.
 
-y finalmente:
+Falló en:
 
-firewall.AuthorizeDID(pkt.SourceDID)
+go vet ./...
 
-Es decir:
+con:
 
-Atacante
-   │
-   │ declara SourceDID = DID de otra persona
-   │
-   │ ML-KEM válido para Bob
-   ▼
-Bob
-   │
-   ├─ crea sesión
-   ├─ acepta el KEM
-   └─ AUTORIZA el DID declarado
+cmd/installer/main.go:15:12:
+pattern assets/ipvn7.exe:
+no matching files found
 
-El problema es que el KEM demuestra que quien hizo el encapsulado conoce el secreto resultante, pero no demuestra que esa persona posea la clave Ed25519 correspondiente al SourceDID.
+El instalador contiene:
 
-Y el propio protocolo ya tiene una solución para esto: el DID es autocertificable porque se deriva directamente de la clave pública Ed25519:
+//go:embed assets/ipvn7.exe
+var ipvn7Binary []byte
 
-did:ipvn7:<hex de clave pública Ed25519>
+//go:embed assets/wintun.dll
+var wintunDLL []byte
 
-Eso significa que el HandshakeInit debería quedar criptográficamente vinculado al DID.
+pero esos assets no están presentes en el repositorio.
 
-Ataque concreto
-
-Mallory podría construir:
-
-SourceDID = DID_Alice
-RecipientDID = DID_Bob
-
-pero encapsular usando las claves públicas de Bob.
-
-Bob podría terminar con:
-
-sessions[DID_Alice] = sesión_de_Mallory
-
-y además:
-
-AuthorizeDID(DID_Alice)
-
-Eso rompe la correspondencia:
-
-DID ↔ posesión de clave
-Corrección
-
-El HandshakeInit debe incluir autenticación de identidad.
-
-Mínimo:
-
-HandshakeInit
-    SourceDID
-    DestinationDID
-    ephemeral X25519
-    ML-KEM ciphertext
-    timestamp
-    sequence
-    firma Ed25519
-
-Y Bob debe verificar:
-
-DID → PublicKeyFromDID()
-PublicKey → Verify(signature)
-
-antes de autorizar el DID.
-
-La regla debería ser:
-
-KEM válido
-      ↓
-firma válida del SourceDID
-      ↓
-DID coincide con clave pública
-      ↓
-crear sesión
-      ↓
-autorizar DID
-
-No:
-
-KEM válido
-      ↓
-autorizar DID
-2. Segundo problema crítico: el Anti-Replay correcto existe, pero main.go no lo utiliza
-
-Esto me parece especialmente importante porque el repositorio afirma haber solucionado precisamente el problema de cross-session replay.
-
-Existe:
-
-src/pkg/l1/anti_replay_session.go
-
-y ahí sí hay una arquitectura mucho mejor:
-
-originDID
-sessionID
-sequence
-timestamp
-
-con una ventana independiente por sesión.
-
-Pero el main.go utiliza:
-
-antiReplay := l0.NewAntiReplayFilter()
-
-y luego:
-
-antiReplay.ValidateAndUpdate(packet.Sequence)
-
-El filtro L0 solamente mantiene:
-
-lastSeq
-bitmap
-
-globalmente.
-
-No mantiene:
-
-DID + SessionID
 Consecuencia
 
-Supongamos:
+La afirmación del documento:
 
-Alice → seq 1
-Bob   → seq 1
+“CI Reproducible”
 
-El filtro global puede considerar el seq=1 de Bob como repetido aunque sea completamente legítimo.
+no está demostrada por el CI actual.
 
-Más grave todavía:
+Y tampoco es correcto considerar que la última rama auditada está en 100% PASS cuando la propia ejecución más reciente terminó en failure.
 
-Alice/session-A/seq=100
-Bob/session-B/seq=100
+2. 🔴 P0 — Hay un bypass conceptual del ZTNA
 
-las sesiones no están aisladas.
+Este es más importante que el fallo de CI.
 
-Y existe código L1 que aparentemente fue diseñado precisamente para resolverlo:
+En main.go, al recibir MsgTypeRoamingUpdate, el código hace:
 
-AntiReplayFilter.Accept(
-    originDID,
-    sessionID,
-    seq,
-    timestamp
-)
-
-pero no está conectado al datapath principal.
-
-Esto es una contradicción arquitectónica
-
-Actualmente tienes dos sistemas:
-
-L0 AntiReplay
-    ↓
-main.go
-    ↓
-datapath real
-
-y:
-
-L1 AntiReplay por sesión
-    ↓
-tests
-    ↓
-NO llega al datapath principal
-
-Para mí esto debe corregirse antes de considerar cerrado el sistema.
-
-3. El supuesto "Zero-Copy 0 B/op" no demuestra Zero-Copy del datapath
-
-Este hallazgo es menos peligroso pero importante para la documentación.
-
-La suite ejecuta:
-
-go test -run=^$ -bench=BenchmarkLinearPipeline_Execute -benchmem ./pkg/core
-
-Y el benchmark es:
-
-pipeline := NewLinearPipeline().
-    AddStage(&noopStage{}).
-    AddStage(&noopStage{}).
-    AddStage(&noopStage{})
+if valid, err := packet.VerifyPacketSignature(); err == nil && valid {
+    ...
+    firewall.AuthorizeDID(&l1.DIDPolicy{
+        DID: packet.SourceDID,
+        AllowInbound: true,
+        AllowOutbound: true,
+        AllowRelay: true,
+    })
+}
 
 Es decir:
 
-no decodifica un paquete real.
+firma válida → autorización automática.
 
-No hace:
+Eso mezcla dos conceptos que la propia arquitectura dice que deben estar separados:
 
-UDP
- ↓
-CBOR
- ↓
-Packet
- ↓
-AntiReplay
- ↓
-ZTNA
- ↓
-AEAD
- ↓
-routing
+IDENTIDAD
+   ↓
+¿demostró que posee la clave?
+
+AUTORIZACIÓN
+   ↓
+¿está autorizado por la política local?
+
+Una firma Ed25519 demuestra posesión de la clave asociada al DID.
+
+No demuestra que ese DID tenga permiso para utilizar el nodo.
+
+Ejemplo del problema
+
+Mallory genera legítimamente:
+
+did:ipvn7:MALLORY
+
+Firma correctamente su RoamingUpdate.
+
+El nodo receptor comprueba:
+
+firma válida = sí
+
+y posteriormente:
+
+AuthorizeDID(Mallory)
+
+Por lo tanto Mallory pasa a estar autorizada.
+
+Eso contradice directamente el modelo:
+
+Default-Deny
++
+AuthorizedDIDs
+
+que la documentación afirma utilizar.
+
+Corrección
+
+El flujo debe ser:
+
+RoamingUpdate
+       ↓
+validar formato
+       ↓
+validar firma
+       ↓
+extraer DID
+       ↓
+¿DID está autorizado por política?
+       ├── NO → DROP
+       └── SÍ
+             ↓
+          aceptar
+
+Nunca:
+
+firma válida → AuthorizeDID()
+
+AuthorizeDID() debe ser una operación administrativa/política, no una consecuencia automática de autenticación.
+
+3. 🔴 P0 — Web UI expuesta en 0.0.0.0
+
+Esto es probablemente el problema de seguridad más práctico.
+
+web_ui.go crea:
+
+http.Server{
+    Addr: fmt.Sprintf("0.0.0.0:%d", port),
+    Handler: mux,
+}
+
+Y el main.go utiliza por defecto:
+
+-web-port 7070
 
 Por tanto:
 
-0 B/op
-0 allocs/op
+0.0.0.0:7070
 
-demuestra que ese benchmark artificial del pipeline vacío no genera allocations.
+no es solamente:
 
-No demuestra:
+127.0.0.1:7070
 
-main.go UDP datapath = zero-copy
+Es accesible desde interfaces de red.
 
-De hecho DecodePacket() utiliza CBOR y construye:
+Y el instalador incluso agrega una regla de firewall:
 
-var p Packet
-cborDecMode.Unmarshal(data, &p)
+IPVN7-Web-TCP
+TCP
+localport=7070
+action=allow
+El problema
 
-por lo que la afirmación de zero-copy absoluto del camino de red requiere una medición diferente.
+La API tiene operaciones como:
 
-Yo cambiaría la afirmación
+/vpn/connect
+/vpn/disconnect
+/vpn/exit
+/vpn/cycle
+/update/apply
+/update/rollback
+/mcp
+/a2a
 
-En lugar de:
+Y no veo autenticación fuerte delante de esas rutas.
 
-Zero-Copy certificado.
+Además:
 
-usar:
+Access-Control-Allow-Origin: *
 
-Eliminada la copia intermedia explícita del buffer UDP antes de la decodificación. El pipeline de procesamiento sigue pendiente de caracterización de allocations end-to-end.
+está habilitado.
 
-Eso sería técnicamente defendible.
+Esto convierte el WebUI en una superficie de administración remota.
 
-4. El sistema PQC sí es real en una parte importante
+4. 🔴 P0 — /vpn/exit puede apagar el nodo
 
-Aquí hay que reconocer lo que está bien.
+handleExit() ejecuta:
 
-pqc_hybrid.go utiliza realmente:
+os.Exit(0)
+
+después de ejecutar el callback de apagado.
+
+Por tanto, si el puerto Web está accesible desde otra máquina y no existe una capa de autenticación que no aparece en estos handlers:
+
+POST /api/v1/vpn/exit
+
+puede convertirse en una operación remota de apagado.
+
+Eso no debería existir así en un daemon de red.
+
+5. 🔴 P0 — Actualización remota demasiado poderosa
+
+También existe:
+
+/api/v1/update/apply
+/api/v1/update/rollback
+
+El VersionManager descarga un binario y lo instala como ejecutable.
+
+Tiene una defensa positiva:
+
+SHA-256
+
+Eso está bien.
+
+Pero hash ≠ autenticidad del publicador si el manifiesto que contiene el hash puede ser manipulado.
+
+La cadena actual es:
+
+manifest
+   ↓
+URL
+   ↓
+SHA256
+   ↓
+binario
+
+Para un sistema de red soberano yo exigiría:
+
+manifest
+   ↓
+firma Ed25519 del fabricante/desarrollador
+   ↓
+verificación de firma
+   ↓
+SHA256
+   ↓
+binario
+
+El hash comprueba:
+
+“este archivo corresponde al hash indicado”.
+
+La firma comprueba:
+
+“este manifiesto fue autorizado por la clave de distribución”.
+
+6. 🟠 CheckOnlineUpdate acepta una URL arbitraria
+
+Esta API:
+
+/api/v1/update/check?url=...
+
+permite suministrar:
+
+manifestURL := r.URL.Query().Get("url")
+
+y luego:
+
+client.Get(manifestURL)
+
+Eso crea una superficie de SSRF.
+
+Aunque no veo inmediatamente una ruta directa a ejecución arbitraria mediante esto, no debería existir en una interfaz de administración expuesta.
+
+Debe existir una política:
+
+URL permitidas:
+    github.com/galleguillosdavid-coder/ipvn7_0.7
+    o
+    servidor de actualización configurado
+
+No:
+
+cualquier URL HTTP
+7. 🟢 La criptografía principal sí es mucho más seria que una simulación
+
+Aquí hay una mejora importante respecto de versiones anteriores.
+
+Encontré utilización real de:
 
 crypto/mlkem
-ML-KEM-768
 
-y las dimensiones corresponden al esquema estándar:
+y:
 
-public key = 1184 bytes
-ciphertext = 1088 bytes
-shared secret = 32 bytes
+mlkem.GenerateKey768()
 
-Además, hay pruebas que comprueban:
+El código usa los tamaños reales de ML-KEM-768:
 
-Encapsulate
-     ↓
-Decapsulate
-     ↓
-shared secret coincide
+Public key:   1184 bytes
+Ciphertext:   1088 bytes
+Shared secret: 32 bytes
 
-y también pruebas UDP reales sobre 127.0.0.1.
+Eso sí es una implementación real del KEM, no simplemente generar bytes con SHA/HMAC y llamarlos ML-KEM.
 
-Eso sí constituye evidencia de una implementación funcional de:
+Además existe:
 
 X25519
 +
@@ -294,544 +329,1207 @@ HKDF
 +
 ChaCha20-Poly1305
 
-en el componente criptográfico.
+La batería de tests también comprueba:
 
-5. Pero cuidado con llamar a la firma "ML-DSA"
+encapsulación;
+decapsulación;
+ciphertext corrupto;
+clave incorrecta;
+downgrade;
+X-Wing;
+UDP loopback;
+cifrado/descifrado.
 
-Aquí el propio código es bastante honesto y eso está bien.
+Esto es una parte sólida del trabajo.
 
-pqc_signatures.go dice explícitamente que el componente reticular:
+8. 🟠 Pero pqc_hybrid.go tiene restos conceptualmente confusos
 
-NO constituye una implementación formal completa de NIST FIPS 204.
+Encontré esto:
 
-Y efectivamente:
+MLDSAPubHex
 
-MLDSA65SigSize = 128
+y:
 
-no corresponde al tamaño de una firma ML-DSA-65 real.
+MLDSA65SeedSize
 
-Lo que hay es:
+pero el propio código reconoce que la firma principal es:
 
-Ed25519 real
+Ed25519
+
+y que ML-DSA es experimental.
+
+Eso es correcto como experimento, pero yo eliminaría cualquier representación que parezca una clave ML-DSA real si no existe realmente ML-DSA.
+
+Especialmente esto:
+
+hDSA := sha256.New()
+hDSA.Write(...)
+hDSA.Write(pqcSignSeed)
+
+y posteriormente:
+
+MLDSAPubHex: hex.EncodeToString(hDSA.Sum(nil))
+
+Eso no constituye una clave pública ML-DSA.
+
+Aunque esté documentado como experimental, el nombre:
+
+MLDSAPubHex
+
+es peligrosamente engañoso.
+
+Mejor:
+
+ExperimentalPQCIdentity
+
+o eliminarlo completamente hasta implementar ML-DSA real.
+
+9. 🟢 Anti-Replay está bastante bien planteado
+
+La nueva implementación L1 utiliza:
+
+originDID
 +
-HMAC/SHA-256 experimental
+sessionID
++
+sequence
++
+timestamp
 
-Por tanto:
+y ventana de:
 
-HECHO
+1024 bits
 
-Ed25519:
+Además existe aislamiento por:
 
-real.
+originDID:sessionID
 
-ML-KEM-768:
+Eso responde directamente a un problema real de replay entre peers/sesiones.
 
-real.
+La idea arquitectónica es correcta:
 
-ML-DSA:
+DID
+ ↓
+Session
+ ↓
+Sequence Window
 
-experimental / no implementado como ML-DSA FIPS 204.
+y no un contador global para toda la red.
 
-Esto está correctamente advertido en el código, pero yo evitaría cualquier documentación que diga simplemente:
+10. 🟠 Hay que revisar profundamente la implementación del anti-replay
 
-IPvN7 tiene ML-DSA
+Hay una cuestión que todavía no considero cerrada:
 
-porque sería una descripción engañosa.
+if sessionID < lastSessID && tsSec < lastSeenTs
 
-6. Otro problema: fallo de generación PQC no detiene el nodo
+Eso no demuestra por sí solo que una sesión antigua sea ilegítima.
 
-En main.go:
+La seguridad real de una sesión debe descansar principalmente en:
 
-hybridKeys, err := l1.GenerateHybridKeyPair(identity)
+handshake autenticado
++
+session binding
++
+AEAD
++
+session lifecycle
 
-if err != nil {
-    core.LogError(...)
-}
+El anti-replay debe ser una barrera adicional, no el mecanismo que decide si una sesión es válida.
 
-y después:
+11. 🟢 MTU 1280 está siendo tratado correctamente como invariante
 
-sessionMgr := l1.NewPQCSessionManager(
-    identity,
-    hybridKeys,
-    firewall,
-)
+El proyecto tiene una política explícita:
 
-Es decir, si la generación de claves falla:
+MAX = 1280
 
-hybridKeys = nil
+y tests para:
 
-pero el proceso continúa.
+1280 → aceptar
+1281 → rechazar
 
-Después determinadas rutas pueden intentar utilizar:
+Eso es correcto conceptualmente.
 
-m.localKeys
+Pero hay que tener cuidado con esta afirmación:
 
-y terminar en comportamiento inválido o panic.
+“garantiza cero fragmentación en cualquier red física”.
 
-Para el modo seguro debería ser:
+Eso es demasiado absoluto.
 
-GenerateHybridKeyPair
-       │
-       ├── OK → continuar
-       │
-       └── ERROR → abortar nodo
+Lo correcto sería:
+
+El protocolo I7 limita su datagrama lógico a 1280 bytes
+para evitar depender de fragmentación IP.
+
+La red física subyacente puede tener sus propias características.
+
+12. 🔴 El documento de auditoría está adelantado respecto al código real
+
+Encontré frases como:
+
+100% CUMPLIDO
+CERRADO Y CERTIFICADO
+100% PASS
+
+pero el CI más reciente:
+
+FAILURE
+
+y además encontré el problema de autorización automática.
+
+Por lo tanto recomiendo cambiar inmediatamente la taxonomía documental.
 
 No:
 
-ERROR → registrar → continuar como si nada
-7. El handshake tampoco está completamente unido a la identidad
+CERTIFICADO
 
-Hay otro detalle relacionado con el primero.
+Sino:
 
-HandleHandshakeRespPacket() verifica:
+AUDITADO INTERNAMENTE
 
-pkt.VerifyPacketSignature()
+y:
 
-Eso está bien.
+EVIDENCIA LOCAL
 
-Pero no verifica explícitamente que:
+hasta que una ejecución limpia y reproducible pase desde un checkout limpio.
 
-pkt.DestDID == identidad local
+13. 🔴 Hay una inconsistencia muy importante entre documentación y estructura real
 
-ni que el SourceDID corresponda exactamente al peer esperado por el pendingSession.
+ARQUITECTURA.md describe:
 
-Actualmente la asociación principal es:
+src/
+├── core/
+├── routing/
+├── adapters/
+└── experimental/
 
-pendingSessions[pkt.SourceDID]
+pero el árbol real que audité contiene principalmente:
 
-Yo endurecería esto a algo equivalente a:
+src/pkg/core
+src/pkg/l0
+src/pkg/l1
+src/pkg/l2
+src/pkg/wasm
 
-SessionID pendiente
-+
-expectedPeerDID
-+
-expectedDestinationDID
-+
-timestamp/expiry
+No es exactamente la arquitectura física que el documento representa.
 
-Así una respuesta no puede simplemente presentarse ante cualquier sesión pendiente.
+Esto no es solamente estética.
 
-8. El descubrimiento está bastante mejor de lo que parece
+Para una auditoría futura necesitas poder hacer:
 
-Aquí encontré algo positivo respecto de las versiones anteriores.
+documento → archivo → función → test → evidencia
 
-EnableBroadcast existe y por defecto queda:
+sin traducciones ambiguas.
 
-false
+14. 🔴 El instalador Windows está incompleto
 
-por lo que el broadcast:
+Además del go:embed roto:
 
-7777
-7778
-7001
-8080
+assets/ipvn7.exe
+assets/wintun.dll
 
-no se ejecuta automáticamente.
+hay otra cuestión arquitectónica.
 
-Eso coincide bastante bien con tu principio:
+El instalador intenta incluir un binario previamente construido:
 
-"la red escucha, no grita".
+ipvn7.exe
 
-Pero el sistema todavía hace periódicamente:
+dentro del propio instalador.
 
-STUN keepalive
-+
-rendezvous
-+
-probeTrustedPeers
-+
-DiscoverAllPeers
+Eso significa que tienes dos pipelines diferentes:
 
-por lo que "silencioso" no significa realmente pasivo.
+Go source
+    ↓
+ipvn7.exe
+    ↓
+installer
 
-Eso no es necesariamente un bug; es una decisión de diseño que debe quedar claramente diferenciada:
+pero CI intenta ejecutar:
 
-broadcast LAN = opcional/desactivado
-discovery unicast/rendezvous = activo
-STUN = activo
-9. El repositorio tiene una cantidad importante de arquitectura periférica
+go vet ./...
 
-Veo:
+antes de tener:
+
+assets/ipvn7.exe
+Solución limpia
+
+Separar:
+
+cmd/ipvn7
+
+de:
+
+cmd/installer
+
+y compilar el instalador solamente después de construir el binario.
+
+Ejemplo:
+
+JOB 1
+  go test
+  go vet
+  go build ipvn7
+
+JOB 2
+  descargar/compilar Wintun
+  copiar ipvn7.exe
+  go build installer
+
+JOB 3
+  empaquetar release
+
+No meter binarios generados en el source tree.
+
+15. 🟠 El repositorio está creciendo demasiado
+
+Esto me preocupa desde el punto de vista de tu objetivo original de:
+
+núcleo mínimo.
+
+Actualmente conviven:
 
 L0
 L1
 L2
-Core
-interfaces
-TUN
-SOCKS5
-WebUI
-STUN
-Rendezvous
-Kleinberg
-XDP/eBPF
-WASM
-SDK Go
-SDK Python
-SDK Rust
-SDK TypeScript
-Docker
-scripts
-agents
-skills
-etc.
-
-Eso es muchísimo para un núcleo que conceptualmente quieres mantener pequeño.
-
-Y aquí veo una tensión con tu propia filosofía anterior:
-
-"Core transports structure, not semantics."
-
-El proyecto está empezando a parecer un Network OS completo, no solamente un núcleo de transporte IPvN7.
-
-No digo que haya que borrar esos componentes.
-
-Yo los separaría físicamente:
-
-CORE
-├── wire
-├── identity
-├── session
-├── channel
-├── routing
-├── integrity
-└── fragmentation
-
-ADAPTERS
-├── TUN
-├── SOCKS5
-├── STUN
-├── DERP
-├── WebUI
-├── XDP
-└── etc.
-
-EXPERIMENTAL
-├── AI
-├── X-Wing
-├── ML-DSA
-└── autonomous
-
-Eso haría mucho más fácil auditar el verdadero IPvN7.
-
-10. El router no debería formar parte de la prueba de seguridad
-
-Hay una mezcla que conviene evitar:
-
 PQC
-ZTNA
-AntiReplay
-Kleinberg
-Discovery
+X-Wing
+Sphinx
+SOCKS5
+STUN
+NAT traversal
+UPnP
 TUN
+Wintun
+WASM
+MCP
+A2A
+AP2
+x402
+Edge AI
+Kuzu
+Planetary Mesh
+Egress
+Shadow Devices
+Telemetry
+QoS
+Pacing
+...
 
-en el mismo camino lógico.
+Eso ya no es un “núcleo mínimo”.
 
-El camino mínimo debería poder demostrarse sin router sofisticado:
+Es prácticamente un:
 
-UDP
- ↓
-Wire Decode
- ↓
-Identity
- ↓
-AntiReplay
- ↓
-Session
- ↓
-AEAD
- ↓
-Application
+Network OS + VPN + proxy + AI gateway + agent framework
+
+Eso puede ser una plataforma, pero no debería confundirse con el núcleo I7.
+
+16. Mi separación recomendada
+
+Yo congelaría el núcleo en:
+
+I7 CORE
+│
+├── Identity
+├── Packet
+├── Container
+├── Session
+├── Channel
+├── Integrity
+├── MTU
+├── Anti-Replay
+└── Routing
 
 Después:
 
-Routing
+ADAPTERS
+│
+├── UDP
+├── TUN
+├── TCP
+├── QUIC
+└── WireGuard
 
-debería decidir únicamente:
+Después:
 
-¿por dónde envío?
+SERVICES
+│
+├── SOCKS5
+├── WebUI
+├── STUN
+├── NAT traversal
+└── Discovery
 
-no:
+Y fuera del núcleo:
 
-¿quién eres?
-¿puedo confiar en ti?
-¿estás cifrado?
+EXPERIMENTAL
+│
+├── Sphinx
+├── Planetary
+├── WASM
+├── AI
+├── MCP
+├── A2A
+├── AP2
+├── x402
+└── Egress intelligence
 
-Eso mantiene limpio el diseño.
+Esto encaja mucho mejor con tu principio:
 
-11. Las pruebas actuales tienen una laguna importante
+Core transporta estructura, no semántica.
 
-Las pruebas comprueban muy bien:
+17. Orden exacto de corrección
 
-Alice ↔ Bob
+Yo no seguiría agregando funcionalidades todavía.
 
-pero faltan pruebas adversariales del tipo:
+Haría esto:
 
-Test A — DID falso
-Mallory
-SourceDID = Alice
-KEM → Bob
+P0 — Seguridad
+ Eliminar AuthorizeDID() automático desde RoamingUpdate.
+ Separar autenticación de autorización.
+ Hacer que ZTNA sea realmente Default-Deny.
+ Cerrar WebUI a 127.0.0.1 por defecto.
+ Autenticación criptográfica para administración.
+ Proteger /vpn/exit.
+ Proteger /vpn/connect.
+ Proteger /update/*.
+ Proteger /mcp.
+ Proteger /a2a.
+ Eliminar CORS * en administración.
+P0 — CI
+ Resolver assets/ipvn7.exe.
+ Resolver assets/wintun.dll.
+ Ejecutar go vet ./....
+ Ejecutar go test ./....
+ Ejecutar go test -race.
+ Ejecutar fuzz.
+ Compilar Windows.
+ Compilar Linux.
+ Compilar macOS.
+P1 — Criptografía
+ Eliminar nomenclatura falsa de ML-DSA.
+ Revisar X-Wing contra el estándar exacto.
+ Firmar manifiestos de actualización.
+ Verificar binding completo del handshake.
+ Revisar lifecycle de SessionID.
+P1 — Arquitectura
+ Congelar L0.
+ Congelar L1.
+ Sacar experimental del camino crítico.
+ Actualizar ARQUITECTURA.md.
+ Crear una matriz función → archivo → test → evidencia.
+P2 — Rendimiento
 
-Debe fallar.
+Recién después:
 
-Test B — DID correcto + clave incorrecta
-SourceDID = Alice
-firma = Mallory
+ benchmark real;
+ allocations;
+ pacing;
+ congestion control;
+ MTU dinámico;
+ multipath.
+18. El punto más importante
 
-Debe fallar.
+Hay una diferencia entre:
 
-Test C — Cross-session
-Alice/session1/seq10
-Alice/session2/seq10
+"Tenemos mucho código y muchos tests"
 
-Debe aceptar ambos.
+y:
 
-Test D — Cross-peer
-Alice/seq10
-Bob/seq10
+"Tenemos un protocolo pequeño, seguro y demostrado."
 
-Debe aceptar ambos.
+IPVN7 0.7 está todavía en el primer estado.
 
-Test E — Replay
-Alice/session1/seq10
-Alice/session1/seq10
+Pero ya tiene piezas técnicamente interesantes y reales, especialmente:
 
-Segundo debe fallar.
+ML-KEM-768
+X25519
+Ed25519
+ChaCha20-Poly1305
+Anti-Replay
+MTU enforcement
+UDP real
+TUN
+routing
 
-Test F — Handshake replay
+Lo que ahora toca no es añadir más cosas.
 
-Reenviar exactamente el mismo HandshakeInit.
+Es reducir, separar y demostrar.
 
-Debe ser rechazado.
+Prioridad absoluta
 
-Test G — respuesta para otro destinatario
-Bob → Carol
+Los tres problemas que yo solucionaría antes de cualquier nueva feature son:
 
-presentada ante Alice.
+1. 🔴 ZTNA auto-authorize
+2. 🔴 WebUI/API sin autenticación
+3. 🔴 CI roto por installer/assets
 
-Debe fallar.
+Después de esos tres, volvería a ejecutar una auditoría desde checkout limpio, y recién entonces tendría sentido hablar de “cierre”.
 
-Test H — modificación de SourceDID
+dame una guia exacta separada por fases como corregir y como programar de aqui en adelante cambiando skill y agentes
 
-Modificar solamente:
+Sí. Para este repositorio yo cambiaría la forma de programarlo antes de seguir agregando funcionalidades. El problema principal ya no es “falta código”: es que el proyecto necesita una disciplina de arquitectura, seguridad, pruebas y agentes.
 
-SourceDID
+Te propongo trabajar desde ahora con fases cerradas, y que cada agente tenga una responsabilidad única.
 
-después del handshake.
+FASE 0 — Congelar el estado actual
 
-Debe fallar.
+Objetivo: que ningún agente siga modificando cosas mientras no sepamos qué está realmente funcionando.
 
-12. La afirmación "100% PASS" necesita una corrección conceptual
+No agregar funcionalidades.
 
-El repositorio documenta:
+Checklist:
 
-Health Score 100%
-100% PASS
-DEMOSTRADO FÍSICAMENTE
+ Crear rama audit/baseline.
+ Registrar commit actual.
+ Ejecutar go test ./....
+ Ejecutar go vet ./....
+ Ejecutar go build ./....
+ Registrar exactamente qué falla.
+ Ejecutar tests de seguridad existentes.
+ Registrar los binarios que realmente se pueden compilar.
+ Crear docs/BASELINE.md.
+ Eliminar de la documentación afirmaciones como 100% PASS, CERTIFICADO o CERRADO si no están demostradas por CI.
 
-El problema no es que los tests sean falsos.
+Regla del agente:
 
-El problema es qué están demostrando.
+No arreglar todavía. Solo medir y documentar.
+
+FASE 1 — Seguridad crítica
+
+Esta es la primera fase de programación real.
+
+1.1 Corregir ZTNA
+
+Actualmente tienes el problema conceptual:
+
+firma válida
+      ↓
+AuthorizeDID()
+      ↓
+acceso permitido
+
+Debe quedar:
+
+paquete
+   ↓
+validar formato
+   ↓
+verificar firma
+   ↓
+¿DID está autorizado?
+   ├── NO → DROP
+   └── SÍ → continuar
+Cambiar
+
+En:
+
+src/cmd/ipvn7/main.go
+
+Eliminar la autorización automática producida por MsgTypeRoamingUpdate.
+
+AuthorizeDID() debe ser una operación de política, no una consecuencia de autenticación.
+
+Test obligatorio
+
+Crear pruebas:
+
+TestRoamingValidSignatureUnauthorizedDID
+    → DROP
+
+TestRoamingValidSignatureAuthorizedDID
+    → ACCEPT
+
+TestRoamingInvalidSignature
+    → DROP
+
+TestRoamingUnknownDID
+    → DROP
+FASE 2 — Cerrar completamente WebUI
+
+Actualmente:
+
+0.0.0.0:7070
+
+es demasiado peligroso para una interfaz administrativa.
+
+Objetivo inicial
+127.0.0.1:7070
+
+y solamente posteriormente permitir administración remota mediante un mecanismo autenticado.
+
+Separar:
+WebUI pública
+        ≠
+WebUI administrativa
+
+La administración debe estar detrás de:
+
+Authentication
+      ↓
+Authorization
+      ↓
+Operation
+
+No:
+
+HTTP
+ ↓
+Operation
+Rutas críticas
+
+Revisar especialmente:
+
+/vpn/connect
+/vpn/disconnect
+/vpn/exit
+/vpn/cycle
+/update/apply
+/update/rollback
+/mcp
+/a2a
+
+Cada una debe tener una política explícita.
+
+Tests
+
+Crear:
+
+TestAdminWithoutAuth
+    → 401/403
+
+TestAdminAuthenticatedUnauthorized
+    → 403
+
+TestAdminAuthorized
+    → operation allowed
+
+Y eliminar:
+
+Access-Control-Allow-Origin: *
+
+del panel administrativo.
+
+FASE 3 — Eliminar SSRF del sistema de actualización
+
+Actualmente:
+
+/api/v1/update/check?url=...
+
+permite introducir una URL arbitraria.
+
+Eso debe desaparecer.
+
+Arquitectura nueva
+Configuración
+     ↓
+Trusted Update Host
+     ↓
+Manifest
+     ↓
+Firma digital
+     ↓
+SHA-256
+     ↓
+Binary
+     ↓
+Install
+
+No:
+
+usuario → URL arbitraria → descargar → instalar
+Seguridad del update
+
+Usar:
+
+Ed25519 signature
+        +
+SHA-256
+
+El hash demuestra integridad.
+
+La firma demuestra autenticidad del publicador.
+
+FASE 4 — Arreglar CI antes de seguir
+
+Aquí hay una regla importante:
+
+Nunca vuelvas a programar una funcionalidad nueva sobre un CI roto.
+
+El problema conocido es:
+
+cmd/installer/main.go
+
+requiere:
+
+assets/ipvn7.exe
+assets/wintun.dll
+
+pero esos archivos no existen en el checkout normal.
+
+Arquitectura correcta
+Job 1 — Core
+go test ./...
+go vet ./...
+go build ./...
+
+Debe funcionar sin instalador.
+
+Job 2 — Windows package
+build ipvn7.exe
+        ↓
+obtener wintun.dll
+        ↓
+crear assets/
+        ↓
+compilar installer
+Job 3 — Release
+core binary
+installer
+checksums
+signed manifest
+
+Así el repositorio fuente no depende de binarios generados.
+
+FASE 5 — Limpiar criptografía
+
+Aquí hay que ser especialmente estricto.
+
+Tienes implementación real de:
+
+ML-KEM-768
+X25519
+Ed25519
+HKDF
+ChaCha20-Poly1305
+
+Eso debe permanecer.
+
+Pero hay nombres que sugieren ML-DSA cuando realmente no tienes una implementación ML-DSA equivalente.
+
+Regla
+
+Si no es el algoritmo real:
+
+NO llamarlo ML-DSA
+
+Cambiar nombres experimentales como:
+
+MLDSAPubHex
+MLDSA65SeedSize
+
+por nombres honestos.
 
 Por ejemplo:
 
-Test PQC
+ExperimentalSignatureSeed
+ExperimentalPublicIdentifier
 
-demuestra que:
+hasta implementar realmente ML-DSA.
 
-ML-KEM → secreto compartido → AEAD
+FASE 6 — Congelar el CORE IPv7
 
-funciona.
+Aquí haría el cambio arquitectónico más importante.
 
-No demuestra:
+Tu CORE debería quedar pequeño.
 
-DID autenticado correctamente
+CORE
+Identity
+Packet
+Container
+Object
+Session
+Channel
+Integrity
+AntiReplay
+MTU
+Routing
 
-porque precisamente el handshake tiene la vulnerabilidad que encontré.
+Nada más.
 
-Y:
+La regla debe ser:
 
-AntiReplay L1
+El CORE transporta estructura. No transporta semántica de aplicaciones.
 
-demuestra que su algoritmo por sesión funciona.
+Por tanto:
 
-Pero main.go utiliza otro AntiReplay.
-
-Por eso yo clasificaría actualmente el estado así:
-
-Componente	Estado que puedo verificar
-ML-KEM-768	IMPLEMENTADO / probado
-X25519	IMPLEMENTADO / probado
-ChaCha20-Poly1305	IMPLEMENTADO / probado
-Ed25519/DID	IMPLEMENTADO / probado
-ZTNA Default-Deny	IMPLEMENTADO / integrado
-Discovery sin broadcast por defecto	IMPLEMENTADO
-Anti-Replay por sesión	IMPLEMENTADO pero no conectado al datapath principal
-Anti-Replay utilizado por main.go	IMPLEMENTADO, pero global
-Zero-copy end-to-end	NO DEMOSTRADO
-ML-DSA FIPS 204	NO IMPLEMENTADO; experimental
-Identidad autenticada durante HandshakeInit	DEFECTUOSO
-Seguridad completa del datapath	NO CERRADA
-13. Mi diagnóstico de la arquitectura actual
-
-La veo aproximadamente así:
-
-                 ┌──────────────────────┐
-                 │       Discovery      │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-UDP ──► Decode ──► AntiReplay L0 ──► Dispatch
-                            │
-             ┌──────────────┼──────────────┐
-             │              │              │
-          Handshake       Data         Roaming
-             │              │              │
-             ▼              ▼              ▼
-          PQC/KEM         ZTNA          Ed25519
-             │              │
-             ▼              ▼
-          Session         AEAD
-                            │
-                            ▼
-                           TUN
-
-El diseño que yo perseguiría para el núcleo sería:
-
-UDP
+CORE
  │
- ▼
-FRAME VALIDATION
+ ├── Identity
+ ├── Packet
+ ├── Container
+ ├── Session
+ ├── Channel
+ ├── Integrity
+ ├── AntiReplay
+ ├── MTU
+ └── Routing
+
+Después:
+
+ADAPTERS
  │
- ├── size
- ├── version
- ├── destination
- └── timestamp
+ ├── UDP
+ ├── TCP
+ ├── QUIC
+ ├── TUN
+ └── WireGuard
+
+Después:
+
+SERVICES
  │
- ▼
-IDENTITY
+ ├── Discovery
+ ├── STUN
+ ├── NAT
+ ├── SOCKS5
+ └── WebUI
+
+Y fuera del camino crítico:
+
+EXPERIMENTAL
  │
- └── DID ↔ Ed25519
- │
- ▼
-ANTI-REPLAY
- │
- └── DID + SessionID + Sequence
- │
- ▼
-SESSION
- │
- ├── X25519
- ├── ML-KEM-768
- └── key derivation
- │
- ▼
-ZTNA
- │
- └── policy
- │
- ▼
-AEAD
- │
- └── ChaCha20-Poly1305
- │
- ▼
-ROUTING
- │
- ▼
-APPLICATION / TUN
+ ├── Sphinx
+ ├── Planetary
+ ├── WASM
+ ├── AI
+ ├── MCP
+ ├── A2A
+ ├── AP2
+ ├── x402
+ └── Egress intelligence
+FASE 7 — Crear contratos del CORE
 
-Ese orden es mucho más defendible.
+Antes de añadir código nuevo, cada componente debe tener una interfaz clara.
 
-14. Qué arreglaría primero
+Por ejemplo:
 
-No añadiría nuevas funciones todavía.
+Packet
+Container
+Session
+Channel
+Identity
+Path
 
-Haría exactamente estas 5 correcciones:
+Cada uno debe responder:
 
-1. Autenticar HandshakeInit
+¿Qué representa?
+¿Qué datos contiene?
+¿Quién lo crea?
+¿Quién lo modifica?
+¿Quién lo destruye?
+¿Qué invariantes tiene?
+¿Qué errores puede producir?
+¿Cómo se prueba?
 
-Firma Ed25519 obligatoria y DID autocertificable.
+Crear:
 
-2. Sustituir AntiReplay L0 por AntiReplay L1
+docs/core/
+    identity.md
+    packet.md
+    container.md
+    session.md
+    channel.md
+    routing.md
+    mtu.md
+    anti_replay.md
+FASE 8 — Contratos matemáticos
 
-El datapath debe usar:
+Aquí aprovecharía tu filosofía de matemática sobre algoritmos innecesariamente complejos.
 
-DID + SessionID + Sequence + Timestamp
+Cada elemento crítico debe tener invariantes.
 
-y eliminar el filtro global del camino principal.
+Ejemplo:
 
-3. Añadir prueba de suplantación
+MAX_DATAGRAM = 1280
 
-Un test debe demostrar:
+Entonces:
 
-Mallory ≠ Alice
+payload + header <= 1280
 
-aunque Mallory pueda crear un KEM válido.
+Debe existir una prueba que lo demuestre.
 
-4. Rehacer la prueba Zero-Copy
+Para sesiones:
+
+SessionID != 0
+SessionID pertenece a una sesión válida
+SessionID no puede reutilizarse incorrectamente
+
+Para anti-replay:
+
+(originDID, sessionID, sequence)
+
+debe determinar correctamente la ventana.
+
+Esto debe convertirse en tests, no solamente documentación.
+
+FASE 9 — Pruebas destructivas
+
+Después de seguridad y CORE.
+
+Crear una batería permanente:
+
+tests/
+ ├── unit/
+ ├── integration/
+ ├── security/
+ ├── adversarial/
+ ├── interoperability/
+ ├── performance/
+ └── fuzz/
+Seguridad
+
+Probar:
+
+packet corrupto
+firma inválida
+DID desconocido
+DID válido pero no autorizado
+replay
+sequence inválido
+session inválida
+container corrupto
+MTU > 1280
+fragmentación incorrecta
+downgrade
+handshake incompleto
+Fuzzing
+
+Especialmente:
+
+Packet parser
+Container parser
+TLV parser
+Session parser
+Routing parser
+FASE 10 — Recién aquí rendimiento
+
+No optimizar antes.
 
 Medir:
 
-UDP Read
-→ DecodePacket
-→ validation
-→ ZTNA
-→ decrypt
+throughput
+latency
+jitter
+CPU
+RAM
+allocations
+packet rate
+pacing
+MTU
 
-con:
+Y especialmente tu idea de:
 
--benchmem
--race
+velocidad constante
 
-y separar claramente:
+en lugar de:
 
-pipeline orchestration benchmark
+máximo → congestión → pérdida → recuperación
 
-de:
+Pero primero medirla.
 
-network datapath benchmark
-5. Si falla PQC → abortar
+No declararla superior antes de tener resultados.
 
-No continuar con:
+FASE 11 — Interoperabilidad
 
-hybridKeys == nil
-Veredicto técnico
+Después:
 
-La versión 0.7 ya dejó de ser solamente una maqueta. Hay código real, sockets UDP reales, ML-KEM-768 real, Ed25519 real, AEAD real, TUN, routing y pruebas bastante amplias.
+IPv7 node A
+       ↓
+IPv7 node B
+       ↓
+IPv7 node C
 
-Pero encontré una contradicción importante entre lo que el repositorio declara haber cerrado y lo que realmente está conectado al datapath.
+Probar:
 
-El problema principal es este:
+A → B
+A → C
+A → B → C
 
-           IDENTIDAD
-               │
-               X       ← falta vínculo criptográfico aquí
-               │
-             KEM
-               │
-             SESIÓN
-               │
-          AUTORIZACIÓN
+y después:
 
-Debe ser:
+UDP
+TUN
+WireGuard
+QUIC
 
-           IDENTIDAD
-               │
-          Ed25519 OK
-               │
-             KEM
-               │
-       SessionID creado
-               │
-      AntiReplay por sesión
-               │
-          ZTNA authorize
-               │
-             AEAD
-               │
-              DATA
+La regla:
 
-Yo no haría más funcionalidades de IPvN7 hasta corregir esos puntos. En particular, no añadiría todavía DHT, más perfiles, más agentes, más SDK ni más "galactic scale". Primero cerraría el núcleo criptográfico y demostraría mediante tests adversariales que la identidad, la sesión y el paquete son inseparables.
+El CORE no debería saber qué transporte físico hay debajo.
 
-Además, el estado de CI que pude consultar para el commit f1a1308 no muestra ejecuciones de GitHub Actions asociadas; por tanto, el "100% PASS" que aparece en la documentación no lo puedo considerar una ejecución CI independiente verificable desde GitHub en este momento.
+FASE 12 — Servicios
+
+Solo después de que el CORE esté estable:
+
+Chat
+Files
+VPN
+Remote Support
+IoT
+Gateway
+
+Estos deben consumir el CORE.
+
+No modificarlo para acomodar cada aplicación.
+
+CAMBIO DE SKILLS Y AGENTES
+
+Aquí está probablemente el cambio más importante para tu flujo con IA.
+
+No uses un único agente para todo.
+
+Crea agentes especializados.
+
+AGENTE 1 — Arquitecto
+
+Responsabilidad:
+
+arquitectura
+interfaces
+dependencias
+límites
+
+No programa.
+
+Su trabajo:
+
+¿Dónde debería vivir esto?
+AGENTE 2 — Seguridad
+
+Responsabilidad exclusiva:
+
+ZTNA
+auth
+authorization
+crypto
+replay
+SSRF
+WebUI
+updates
+
+No agrega funcionalidades.
+
+Pregunta permanente:
+
+¿Cómo puede abusarse de esto?
+
+AGENTE 3 — CORE
+
+Solo:
+
+Identity
+Packet
+Container
+Session
+Channel
+MTU
+AntiReplay
+Routing
+
+No tocar:
+
+MCP
+AI
+WASM
+Sphinx
+A2A
+x402
+AGENTE 4 — Testing
+
+No desarrolla funcionalidades.
+
+Su función:
+
+buscar fallos
+crear tests
+fuzzing
+regresiones
+
+Debe intentar romper lo construido.
+
+Este agente debería ser hostil al código.
+
+AGENTE 5 — CI/Build
+
+Solo:
+
+GitHub Actions
+Go versions
+Windows
+Linux
+macOS
+installer
+release
+artifacts
+
+No modificar protocolos.
+
+AGENTE 6 — Performance
+
+Solo entra después de que:
+
+security = OK
+CI = OK
+tests = OK
+
+Trabaja con mediciones reales.
+
+AGENTE 7 — Documentación
+
+No inventa capacidades.
+
+Solo puede escribir:
+
+HECHO
+TESTEADO
+MEDIDO
+NO IMPLEMENTADO
+EXPERIMENTAL
+
+Esto evita que la IA convierta una hipótesis en una característica “certificada”.
+
+REGLA DE TRABAJO ENTRE AGENTES
+
+Nunca:
+
+Agente A modifica
+      ↓
+Agente B modifica
+      ↓
+Agente C modifica
+      ↓
+todo mezclado
+
+Usaría:
+
+ARQUITECTO
+     ↓
+PLAN
+     ↓
+PROGRAMADOR
+     ↓
+TESTER
+     ↓
+SEGURIDAD
+     ↓
+CI
+     ↓
+MERGE
+
+Cada etapa debe poder rechazar el trabajo anterior.
+
+REGLA DE LOS COMMITS
+
+Cada commit debe responder una sola pregunta.
+
+Bien:
+
+fix: prevent unauthorized roaming authorization
+
+Bien:
+
+test: reject replayed session packets
+
+Bien:
+
+fix: bind admin webui to localhost
+
+Mal:
+
+improve ipv7 security performance architecture installer
+REGLA DE ORO PARA LOS AGENTES
+
+Yo pondría este principio en todos tus skills:
+
+NO INVENTAR.
+
+Si algo no está demostrado por código, test,
+benchmark o documentación verificable,
+debe declararse como hipótesis o pendiente.
+
+Nunca convertir:
+HIPÓTESIS → HECHO
+INTENCIÓN → IMPLEMENTACIÓN
+TEST UNITARIO → SEGURIDAD COMPLETA
+BUILD LOCAL → CI REPRODUCIBLE
+HASH → AUTENTICIDAD
+FIRMA VÁLIDA → AUTORIZACIÓN
+
+Y otra regla:
+
+ANTES DE PROGRAMAR:
+
+1. leer arquitectura existente
+2. localizar código afectado
+3. identificar invariantes
+4. identificar tests existentes
+5. explicar cambio mínimo
+6. programar
+7. probar
+8. revisar seguridad
+9. ejecutar CI
+10. documentar evidencia
+ORDEN EXACTO QUE YO USARÍA
+
+No intentaría arreglar todo simultáneamente.
+
+FASE 0
+BASELINE
+   ↓
+FASE 1
+ZTNA
+   ↓
+FASE 2
+WEBUI / ADMIN
+   ↓
+FASE 3
+UPDATE / SSRF
+   ↓
+FASE 4
+CI / BUILD
+   ↓
+FASE 5
+CRYPTO
+   ↓
+FASE 6
+CORE
+   ↓
+FASE 7
+CONTRATOS
+   ↓
+FASE 8
+INVARIANTES
+   ↓
+FASE 9
+FUZZ / ADVERSARIAL
+   ↓
+FASE 10
+PERFORMANCE
+   ↓
+FASE 11
+INTEROPERABILIDAD
+   ↓
+FASE 12
+SERVICIOS
+
+Y recién después volvería a evaluar si realmente necesitas:
+
+Sphinx
+Planetary Mesh
+WASM
+AI
+MCP
+A2A
+AP2
+x402
+Edge AI
+Kuzu
+Egress
+
+No necesariamente hay que eliminarlos. Hay que impedir que contaminen el núcleo.
+
+La meta no debería ser tener un repositorio enorme.
+
+La meta debería ser poder decir:
+
+“Este pequeño núcleo hace exactamente X, puedo demostrarlo con estas pruebas, y todo lo demás se conecta a él sin modificarlo.”
+
+Ese sería, para mí, el cambio fundamental de tu IPv7 0.7: pasar de “seguir construyendo funcionalidades” a construir un núcleo que pueda sobrevivir a los agentes que lo programan.
