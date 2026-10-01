@@ -37,10 +37,10 @@ type Packet struct {
 	Version   uint8  `cbor:"2,keyasint"`
 	Type      uint8  `cbor:"3,keyasint"`
 	SourceDID string `cbor:"4,keyasint"`
-	DestDID   string `cbor:"5,keyasint"`
+	DestDID   string `cbor:"5,keyasint,omitempty"`
 	Timestamp int64  `cbor:"6,keyasint"`
 	Sequence  uint64 `cbor:"7,keyasint"`
-	Nonce     []byte `cbor:"8,keyasint"`
+	Nonce     []byte `cbor:"8,keyasint,omitempty"`
 	Payload   []byte `cbor:"9,keyasint"`
 	Signature []byte `cbor:"10,keyasint,omitempty"`
 }

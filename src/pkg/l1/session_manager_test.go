@@ -2,6 +2,7 @@ package l1_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"net"
 	"testing"
 	"time"
@@ -126,7 +127,7 @@ func TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay(t *testing.T) {
 
 	mgrA := l1.NewPQCSessionManager(idA, keysA, fwA)
 	mgrB := l1.NewPQCSessionManager(idB, keysB, fwB)
-	antiReplayB := l0.NewAntiReplayFilter()
+	antiReplayB := l1.NewAntiReplayFilter(nil)
 
 	// 1. Handshake Init A -> B por UDP físico
 	initPkt, err := mgrA.CreateHandshakeInitPacket(idB.DID(), keysB.ClassicalKEMPub, keysB.MLKEMPubHex)
@@ -205,8 +206,10 @@ func TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay(t *testing.T) {
 		t.Fatalf("Error decodificando datos: %v", err)
 	}
 
-	// Anti-Replay
-	if !antiReplayB.ValidateAndUpdate(recDataPkt.Sequence) {
+	// Anti-Replay L1
+	sKeysB, _ := mgrB.GetSession(recDataPkt.SourceDID)
+	sessIDB := binary.BigEndian.Uint64(sKeysB.SessionID[:8])
+	if !antiReplayB.Accept(recDataPkt.SourceDID, sessIDB, recDataPkt.Sequence, recDataPkt.Timestamp) {
 		t.Fatalf("Anti-Replay debió aceptar el primer paquete con secuencia %d", recDataPkt.Sequence)
 	}
 
@@ -226,7 +229,7 @@ func TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay(t *testing.T) {
 	}
 
 	// 5. Test de Falsabilidad 1: Replay attack debe ser descartado
-	if antiReplayB.ValidateAndUpdate(recDataPkt.Sequence) {
+	if antiReplayB.Accept(recDataPkt.SourceDID, sessIDB, recDataPkt.Sequence, recDataPkt.Timestamp) {
 		t.Fatalf("Anti-Replay debió RECHAZAR el paquete repetido!")
 	}
 

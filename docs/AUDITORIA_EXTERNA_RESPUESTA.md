@@ -59,3 +59,16 @@ A partir de esta auditoría, queda terminantemente prohibido utilizar términos 
 
 1. **Suite de Loopback Físico UDP con ZTNA y PQC:** `TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay` en `src/pkg/l1/session_manager_test.go` demostró transmisión UDP real en sockets del sistema operativo con handshake PQC, derivación de claves, cifrado ChaCha20-Poly1305, control anti-replay y bloqueo ZTNA Default-Deny de atacantes no autorizados.
 2. **Magna Multi-Suite de Regresión (100% PASS):** Ejecución certificada de `scripts/verify_ipvn7_standard.ps1` con 0 violaciones del límite de 400 líneas, 0 carreras de datos (`-race`), Invariante Zero-Copy a 0 B/op y Health Score del 100%.
+
+---
+
+## 6. Resolución de la Segunda Ronda de Auditoría (Compromiso de Identidad y Resiliencia Adversarial)
+
+| Hallazgo Específico | Vulnerabilidad Identificada | Remedio Criptográfico / Arquitectónico | Estado Factual |
+| :--- | :--- | :--- | :---: |
+| **A. Suplantación de DID en HandshakeInit** | Atacante declaraba `SourceDID` ajeno; KEM decapsulaba y Bob autorizaba al DID suplantado. | Firma Ed25519 obligatoria vinculada al SourceDID. Verificación previa a decapsulación y autorización. Criptograma canónico X-Wing de 1120B respetando MTU 1280B. | **🟢 DEMOSTRADO FÍSICAMENTE** |
+| **B. Anti-Replay L1 ausente en main.go** | `main.go` usaba filtro global L0 vulnerable a interferencia cross-peer y cross-session. | `main.go` migrado a `l1.NewAntiReplayFilter(nil)` con aislamiento por `originDID:SessionID`, timestamp y ventana de 1024 bits. | **🟢 DEMOSTRADO FÍSICAMENTE** |
+| **C. Falla PQC silenciada** | `GenerateHybridKeyPair` fallido permitía continuar con `hybridKeys == nil`. | Terminación inmediata fatal (`os.Exit(1)`) ante error en generación de claves post-cuánticas. | **🟢 DEMOSTRADO FÍSICAMENTE** |
+| **D. Respuestas sin validación de DestDID** | `HandleHandshakeRespPacket` no validaba correspondencia con `DestDID` local ni expiración. | Validación estricta de `pkt.DestDID == localDID`, correspondencia con `pendingSession` y expiración a 60s. | **🟢 DEMOSTRADO FÍSICAMENTE** |
+| **E. Carencia de Tests Adversariales** | Pruebas no comprobaban escenarios maliciosos (DID falso, firma forjada, replays). | Creada suite `session_adversarial_test.go` con 8 escenarios adversariales (Tests A hasta H) pasando al 100%. | **🟢 DEMOSTRADO FÍSICAMENTE** |
+

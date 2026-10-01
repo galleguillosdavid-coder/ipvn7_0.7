@@ -41,13 +41,25 @@ func DIDFromPublicKey(pub ed25519.PublicKey) string {
 	return fmt.Sprintf("did:ipvn7:%s", hex.EncodeToString(pub))
 }
 
-// PublicKeyFromDID decodifica un DID a su clave pública Ed25519.
-func PublicKeyFromDID(did string) (ed25519.PublicKey, error) {
-	parts := strings.Split(did, ":")
-	if len(parts) != 3 || parts[0] != "did" || parts[1] != "ipvn7" {
-		return nil, fmt.Errorf("formato de DID inválido: %s", did)
+// CanonicalDID normaliza cualquier DID o clave pública hex a la forma canónica did:ipvn7:<hex>
+func CanonicalDID(didOrHex string) string {
+	if strings.HasPrefix(didOrHex, "did:ipvn7:") {
+		return didOrHex
 	}
-	raw, err := hex.DecodeString(parts[2])
+	return "did:ipvn7:" + didOrHex
+}
+
+// PublicKeyFromDID decodifica un DID (canónico o compacto de 64 hex) a su clave pública Ed25519.
+func PublicKeyFromDID(did string) (ed25519.PublicKey, error) {
+	hexKey := did
+	if strings.HasPrefix(did, "did:ipvn7:") {
+		parts := strings.Split(did, ":")
+		if len(parts) != 3 || parts[0] != "did" || parts[1] != "ipvn7" {
+			return nil, fmt.Errorf("formato de DID inválido: %s", did)
+		}
+		hexKey = parts[2]
+	}
+	raw, err := hex.DecodeString(hexKey)
 	if err != nil {
 		return nil, fmt.Errorf("hexadecimal de clave pública inválido: %w", err)
 	}

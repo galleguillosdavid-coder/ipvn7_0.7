@@ -8,6 +8,7 @@
 package l1
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,28 +29,32 @@ type SessionReplayTracker struct {
 
 // AntiReplayStats contiene métricas de paquetes evaluados y descartados
 type AntiReplayStats struct {
-	EvaluatedPackets uint64 `json:"evaluated_packets"`
-	AcceptedPackets  uint64 `json:"accepted_packets"`
-	ImmediateReplays uint64 `json:"immediate_replays"`
-	StaleReplays     uint64 `json:"stale_replays"`
+	EvaluatedPackets  uint64 `json:"evaluated_packets"`
+	AcceptedPackets   uint64 `json:"accepted_packets"`
+	ImmediateReplays  uint64 `json:"immediate_replays"`
+	StaleReplays      uint64 `json:"stale_replays"`
 	CrossSessionDrops uint64 `json:"cross_session_drops"`
-	TimestampDrops   uint64 `json:"timestamp_drops"`
-	ActiveSessions   int    `json:"active_sessions"`
+	TimestampDrops    uint64 `json:"timestamp_drops"`
+	ActiveSessions    int    `json:"active_sessions"`
 }
 
 // AntiReplayFilter gestiona las ventanas de validación para todos los pares y sesiones
 type AntiReplayFilter struct {
-	mu       sync.RWMutex
-	sessions map[string]*SessionReplayTracker // Clave: originDID
-	arbiter  *GlobalMemoryArbiter
-	stats    AntiReplayStats
+	mu            sync.RWMutex
+	sessions      map[string]*SessionReplayTracker // Clave: originDID:sessionID
+	latestSeen    map[string]int64                 // Clave: originDID -> último timestamp UNIX registrado
+	latestSession map[string]uint64                // Clave: originDID -> mayor SessionID vista
+	arbiter       *GlobalMemoryArbiter
+	stats         AntiReplayStats
 }
 
 // NewAntiReplayFilter inicializa el filtro con enlace opcional al árbitro de memoria
 func NewAntiReplayFilter(arbiter *GlobalMemoryArbiter) *AntiReplayFilter {
 	return &AntiReplayFilter{
-		sessions: make(map[string]*SessionReplayTracker),
-		arbiter:  arbiter,
+		sessions:      make(map[string]*SessionReplayTracker),
+		latestSeen:    make(map[string]int64),
+		latestSession: make(map[string]uint64),
+		arbiter:       arbiter,
 	}
 }
 
@@ -60,17 +65,36 @@ func (f *AntiReplayFilter) Accept(originDID string, sessionID uint64, seq uint64
 
 	now := time.Now().Unix()
 
+	// Normalizar timestamp si viene en nanosegundos o milisegundos
+	tsSec := ts
+	if tsSec > 1e14 {
+		tsSec = tsSec / 1e9
+	} else if tsSec > 1e11 {
+		tsSec = tsSec / 1e3
+	}
+
 	// 1. Validación de Timestamp (previene paquetes congelados o del futuro distante)
-	diff := now - ts
+	diff := now - tsSec
 	if diff > MaxAllowedJitterSec || diff < -10 {
 		atomic.AddUint64(&f.stats.TimestampDrops, 1)
 		return false
 	}
 
+	sessionKey := fmt.Sprintf("%s:%d", originDID, sessionID)
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	tracker, exists := f.sessions[originDID]
+	lastSeenTs := f.latestSeen[originDID]
+	lastSessID := f.latestSession[originDID]
+
+	// 2. Validación Cross-Session contra sesiones obsoletas o inyecciones pasadas
+	if lastSessID > 0 && sessionID < lastSessID && tsSec < lastSeenTs {
+		atomic.AddUint64(&f.stats.CrossSessionDrops, 1)
+		return false
+	}
+
+	tracker, exists := f.sessions[sessionKey]
 	if !exists {
 		// Nueva sesión: reservar memoria en el árbitro
 		if f.arbiter != nil && !f.arbiter.Reserve(BudgetReplay, 256) {
@@ -85,32 +109,25 @@ func (f *AntiReplayFilter) Accept(originDID string, sessionID uint64, seq uint64
 			LastSeen:  now,
 		}
 		tracker.markBit(0) // Marcar la secuencia actual
-		f.sessions[originDID] = tracker
+		f.sessions[sessionKey] = tracker
+		if tsSec > lastSeenTs {
+			f.latestSeen[originDID] = tsSec
+		}
+		if sessionID > lastSessID {
+			f.latestSession[originDID] = sessionID
+		}
 
 		atomic.AddUint64(&f.stats.AcceptedPackets, 1)
 		return true
 	}
 
-	// 2. Validación Cross-Session
-	if tracker.SessionID != sessionID {
-		// Si es una sesión más nueva (timestamp mayor o reinicio legítimo), actualizar sesión
-		if ts >= tracker.LastSeen {
-			tracker.SessionID = sessionID
-			tracker.MaxSeq = seq
-			tracker.SeenBits = make([]uint64, AntiReplayWindowSize/64)
-			tracker.LastSeen = now
-			tracker.markBit(0)
-
-			atomic.AddUint64(&f.stats.AcceptedPackets, 1)
-			return true
-		}
-
-		// Sesión antigua o inyección cruzada
-		atomic.AddUint64(&f.stats.CrossSessionDrops, 1)
-		return false
-	}
-
 	tracker.LastSeen = now
+	if tsSec > lastSeenTs {
+		f.latestSeen[originDID] = tsSec
+	}
+	if sessionID > lastSessID {
+		f.latestSession[originDID] = sessionID
+	}
 
 	// 3. Paquete que avanza la secuencia (nuevo máximo)
 	if seq > tracker.MaxSeq {

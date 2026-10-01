@@ -299,10 +299,19 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - Armonización técnica: Go 1.24/1.26 unificado en `go.mod` y CI GitHub Actions; eliminadas afirmaciones inexactas de "lock-free" en telemetría; arquitectura Kleinberg normalizada a 12 anillos concéntricos con K-buckets.
 - ❌ Prohibido: Admitir tráfico de datos no cifrado o con DIDs no autorizados en el datapath; prohibido rebasar el MTU de 1280B en handshakes KEM; prohibido auto-autorizar DIDs sin intervención explícita.
 
+**DEC-139:** Vinculación Criptográfica Estricta de Identidad en HandshakeInit, Aislamiento Anti-Replay L1 en Datapath y Suite Adversarial Integral
+- Vinculación criptográfica obligatoria entre `SourceDID` y la clave pública Ed25519 en `CreateHandshakeInitPacket` mediante firma digital sobre todo el datagrama; `HandleHandshakeInitPacket` valida `PublicKeyFromDID` y `VerifyPacketSignature` ANTES de cualquier decapsulación KEM o autorización en el firewall ZTNA, erradicando la suplantación de identidad (Hallazgo 1).
+- Empaquetado canónico X-Wing CFRG de 1120 bytes (`EphemeralX25519` 32B + `ML-KEM-768` 1088B) con derivación determinista de sal, garantizando que el datagrama completo con firma Ed25519 respete estrictamente el MTU determinista de 1280 bytes.
+- Sustitución del filtro global L0 por `l1.NewAntiReplayFilter(nil)` en `src/cmd/ipvn7/main.go`, indexando por `originDID:SessionID` con ventana deslizante de 1024 bits y normalización temporal contra interferencias cross-peer y cross-session (Hallazgo 2).
+- Manejo fatal de fallos en generación de claves PQC en `main.go`: aborto inmediato (`os.Exit(1)`) sin continuar con claves nulas (Hallazgo 6).
+- Validación estricta de respuestas 1-RTT en `HandleHandshakeRespPacket`: comprobación obligatoria de `DestDID == localDID`, correspondencia con `pendingSession` y expiración a 60s (Hallazgo 7).
+- Implementación de la suite de pruebas adversariales completas (Tests A hasta H) en `src/pkg/l1/session_adversarial_test.go` (100% PASS).
+- ❌ Prohibido: Autorizar DIDs o registrar sesiones ante HandshakeInit sin firma Ed25519 verificada; prohibido mezclar secuencias de distintas sesiones o pares en filtros globales; prohibido silenciar fallos de entropía o generación criptográfica.
+
 ---
 
 **Última actualización:** 2026-10-01  
-**Total decisiones activas:** 56 (DEC-079 → DEC-138)  
+**Total decisiones activas:** 57 (DEC-079 → DEC-139)  
 **Estado:** Todas INVIOLABLE
 
 

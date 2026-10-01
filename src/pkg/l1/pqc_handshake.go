@@ -71,8 +71,12 @@ func Respond1RTT(
 
 	// Ventana de tolerancia temporal anti-replay preliminar (60 segundos)
 	now := time.Now().UnixNano()
-	age := time.Duration(now - initMsg.Timestamp)
-	if age < -5*time.Second || age > 60*time.Second {
+	tsNano := initMsg.Timestamp
+	if tsNano < 1e14 {
+		tsNano = tsNano * 1e9 // Normalizar segundos a nanosegundos
+	}
+	age := time.Duration(now - tsNano)
+	if age < -10*time.Second || age > 60*time.Second {
 		return nil, nil, fmt.Errorf("marca de tiempo del handshake expirada o desfasada (%v)", age)
 	}
 
