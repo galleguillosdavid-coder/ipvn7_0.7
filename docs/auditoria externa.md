@@ -1,599 +1,568 @@
 revisa 
 galleguillosdavid-coder/ipvn7_0.7
 
-Sí. Revisé directamente el repositorio galleguillosdavid-coder/ipvn7_0.7, incluyendo arquitectura, L0/L1/L2, PQC, routing, pacing, DHT, malla planetaria, tests y documentación de auditoría.
+Sí. Revisé el repositorio galleguillosdavid-coder/ipvn7_0.7 directamente, incluyendo arquitectura, ejecutable principal, L0/L1/L2, descubrimiento, routing, PQC, firewall, pacing, telemetría, tests y CI.
 
-Mi conclusión inicial es importante:
+Repositorio ipvn7_0.7
 
-Hay bastante código real y varias piezas están efectivamente implementadas, pero la auditoría interna del propio repositorio sobreestima el nivel de seguridad/producción en algunos puntos. Encontré al menos un problema de seguridad crítico que debe corregirse antes de seguir agregando funcionalidades.
+Veredicto técnico
 
-1. Estado general que veo
+Hay bastante trabajo real y varias piezas están bien diseñadas, pero todavía no considero que el núcleo v0.7 esté cerrado.
 
-El repositorio ya es grande: el árbol contiene una implementación Go bastante extensa, con L0/L1/L2, TUN/Wintun, UDP, routing, PQC, firewall, DHT, pacing, WebUI, etc.
+El problema principal no es que falte código. Es casi lo contrario:
 
-La arquitectura documentada es coherente con la dirección que hemos venido buscando:
+La arquitectura declarada como "núcleo mínimo" todavía tiene componentes importantes que no están realmente conectados entre sí en el camino de datos.
 
-APPLICATIONS / PROFILES
-          ↓
-      I7 CORE
- Identity
- Object
- Container
- Session
- Channel
- Path
- MTU
- Integrity
- Routing
- Capability
-          ↓
- TRANSPORT ADAPTERS
- UDP / TUN
-          ↓
-      RED FÍSICA
+1. Lo que sí está realmente bien
+Área	Estado que veo
+Go modular	✅
+Separación L0/L1/L2/Core	✅
+DID basado en Ed25519	✅
+ML-KEM-768 real	✅
+X25519 + ML-KEM	✅
+ChaCha20-Poly1305	✅
+CBOR canónico	✅
+límite 1280 B	✅
+Anti-replay	✅ hay implementación
+Routing XOR/Kleinberg	✅ implementado
+Buffer pool	✅ implementado
+Pacing Token Bucket	✅ implementado
+TUN	🟡 implementado
+STUN	🟡 implementado
+descubrimiento	🟡 implementado
+prueba física 2 nodos	🟢 documentada
+WAN/CGNAT hostil	🔴 no demostrado
+sesión PQC completa en el camino real	🟠
+ZTNA realmente aplicado al RX/TX principal	🔴 problema
+zero-copy del camino principal	🔴 no como está escrito
+2. Encontré un problema importante: el firewall no está realmente en el camino de datos
 
-Eso está bien encaminado conceptualmente.
+El main.go crea:
 
-Además, el repositorio tiene una característica que considero positiva: sí distingue DEMOSTRADO / IMPLEMENTADO / EXPERIMENTAL / NO DEMOSTRADO. Eso es mucho mejor que declarar todo como "production-ready".
+firewall := l1.NewZTNAFirewall(true)
 
-2. 🔴 Problema crítico: hay una clave privada real dentro del repositorio
+y el descubrimiento utiliza el firewall.
 
-Encontré:
+Pero posteriormente, cuando llega un paquete UDP, el flujo principal hace:
 
-keystore/node_identity.key
+UDP
+ ↓
+CBOR Unmarshal
+ ↓
+Magic/Version
+ ↓
+router.AddOrUpdatePeer()
+ ↓
+switch packet.Type
+ ↓
+DATOS / forwarding
 
-y contiene una estructura con:
+No veo una evaluación firewall antes de aceptar/procesar/retransmitir el paquete.
 
-public_key
-private_key
+Eso es bastante importante porque la documentación afirma:
 
-Es decir, una clave privada Ed25519 está actualmente versionada en GitHub.
+ZTNA Default-Deny
 
-Esto contradice directamente la afirmación de la auditoría:
+pero el camino de recepción no está protegido por ese mecanismo.
 
-"No hay hardcoded secrets"
+Además existe una segunda contradicción
 
-y también hace que la frase:
+En autonomous_discovery.go:
 
-"Keystore seguro"
+e.Firewall.AuthorizeDID(...)
 
-sea engañosa en el contexto del repositorio público.
+se autoriza al DID descubierto antes de haber completado una autenticación de sesión real.
 
-El problema no es que el archivo tenga permisos 0600 en una máquina local. Una vez que la clave privada está en Git, esos permisos ya no protegen el secreto histórico del repositorio.
+Eso significa que:
 
-Esto es prioridad 0.
+DID anunciado
+   ↓
+descubrimiento
+   ↓
+AuthorizeDID()
+   ↓
+AddOrUpdatePeer()
 
-Hay que:
+es demasiado permisivo.
 
-Revocar/abandonar esa identidad.
-Generar una identidad nueva.
-Eliminar keystore/node_identity.key del árbol actual.
-Eliminarla también del historial Git.
-Añadir keystore/*.key y equivalentes al .gitignore.
-Hacer que el programa genere el keystore localmente.
-Nunca volver a distribuir una identidad privada dentro del repositorio.
+Un atacante que consiga introducir un DID sintácticamente válido en el mecanismo de descubrimiento podría entrar al estado de "autorizado" antes de demostrar posesión criptográfica de la identidad.
 
-Y no basta con borrar el archivo en el próximo commit, porque la clave continúa en el historial.
+Esto sí lo considero una corrección prioritaria.
 
-No voy a reproducir aquí la clave privada encontrada.
+3. El "handshake PQC" todavía no gobierna el tráfico principal
 
-3. 🔴 Segundo problema: pqc_hybrid.go tiene un fallback que no es ML-KEM
+Esto es incluso más importante.
 
-Este punto es mucho más importante de lo que parece.
+El código tiene una implementación bastante interesante de:
 
-El código declara:
-
-HybridKEMAlgorithm = "X25519+ML-KEM-768"
-
-pero Encapsulate() hace esto:
-
-if len(targetKEMBytes) == mlkem.EncapsulationKeySize768 {
-    ...
-    pqcSecret, fullCipher = ek.Encapsulate()
-}
-
-if pqcSecret == nil {
-    pqcSecret, err = deriveFallbackPQC(...)
-}
-
-El fallback calcula un secreto mediante SHA-256.
-
-Por tanto:
-
-clave ML-KEM válida
-        ↓
-ML-KEM real
-
-pero:
-
-clave ML-KEM inválida/truncada
-        ↓
-SHA-256 personalizado
-        ↓
-se sigue presentando como HybridKEMAlgorithm
-
-Eso no es ML-KEM.
-
-La función incluso se llama:
-
-deriveFallbackPQC
-
-Esto es peligroso en un protocolo criptográfico porque puede crear una falsa sensación de que el canal continúa siendo post-cuántico cuando en realidad no lo es.
-
-Mi recomendación
-
-En el núcleo de protocolo:
-
-ML-KEM inválido
-       ↓
-ERROR
-       ↓
-NO ESTABLECER SESIÓN
-
-No:
-
-ML-KEM inválido
-       ↓
-"inventemos otro secreto"
-
-Si quieres compatibilidad degradada, debe ser explícita:
-
-HYBRID_PQC
-CLASSICAL_ONLY
-EXPERIMENTAL_FALLBACK
-
-y jamás compartir el mismo identificador criptográfico.
-
-4. 🟠 Hay una confusión de tamaños en el híbrido
-
-En pqc_hybrid.go aparece:
-
-MLKEM768CipherSize = 128
-
-pero ML-KEM-768 tiene un ciphertext de 1088 bytes.
-
-El propio proyecto lo sabe: l0/pqc_kem.go define correctamente:
-
-MLKEM768CiphertextBytes = 1088
-
-El problema es que L1 crea:
-
-pqcCipher := make([]byte, MLKEM768CipherSize)
-
-y copia solamente los primeros 128 bytes:
-
-copy(pqcCipher, fullCipher[:MLKEM768CipherSize])
-
-Después guarda simultáneamente:
-
-PQCCiphertext
-FullPQCCiphertext
-
-Esto produce dos representaciones diferentes del mismo KEM.
-
-La ruta completa funciona porque Decapsulate() utiliza:
-
-FullPQCCiphertext
-
-cuando tiene los 1088 bytes.
-
-Pero conceptualmente está mal diseñado.
-
-Yo lo simplificaría
-
-Para el protocolo real:
-
-X25519 ephemeral      32 B
-ML-KEM-768 ciphertext 1088 B
---------------------------------
-KEM ciphertext        1120 B
-
-y nada de:
-
-"ciphertext compacto" = primeros 128 bytes
-
-Los primeros 128 bytes no son un ciphertext ML-KEM válido independiente.
-
-5. 🟢 X-Wing está mucho mejor planteado
-
-La parte:
-
-XWingEncapsulate()
-XWingDecapsulate()
-DeriveXWingSharedSecret()
-
-es conceptualmente bastante más limpia.
-
-El código utiliza:
-
-ML-KEM-768
-+
 X25519
 +
-SHA-256 KDF
+ML-KEM-768
++
+HKDF
++
+ChaCha20-Poly1305
 
-y construye:
+y también X-Wing.
 
-1088 + 32 = 1120 bytes
+Pero el main.go que realmente ejecuta el nodo no establece una sesión PQC antes de transportar los datos.
 
-También hay test de round-trip:
+De hecho, cuando recibe:
 
-Alice
+case l0.MsgTypeHandshakeInit,
+     l0.MsgTypeHandshakeResp,
+     l0.MsgTypeHandshakeAuth:
+
+hace esencialmente:
+
+[HANDSHAKE] Recibido tipo ...
+
+No veo ahí una máquina completa:
+
+INIT
  ↓
-X-Wing encapsulate
+KEM
  ↓
-UDP / wire
+AUTH
  ↓
-Bob
+SESSION KEY
  ↓
-X-Wing decapsulate
+AEAD
  ↓
-same shared secret
+DATA
 
-Eso sí es una base útil para el protocolo.
+Mientras que para roaming sí se utiliza:
 
-Pero yo separaría claramente:
+MsgTypeRoamingUpdate
 
-FIPS 203 ML-KEM
+y se firma.
 
-de:
-
-X-Wing
-
-en la API. Ahora están demasiado mezclados dentro de pqc_hybrid.go.
-
-6. 🟠 ML-DSA: la implementación declarada no coincide completamente con lo que hace el código
-
-La documentación afirma:
-
-Ed25519 + ML-DSA-65
-
-pero GenerateHybridKeyPair() hace:
-
-pqcSignSeed := make([]byte, 32)
-
-y luego:
-
-SHA256("ML-DSA-65-PUBLIC-MATRIX-DERIVATION" + seed)
-
-para producir algo llamado:
-
-MLDSAPubHex
-
-Eso no constituye una implementación de ML-DSA-65.
-
-Hay que distinguir:
-
-ML-DSA real
-
-de:
-
-identificador/hash experimental relacionado con una semilla
-
-Los tests pueden comprobar que ese mecanismo funciona internamente, pero eso no lo convierte en FIPS 204.
-
-Esto es exactamente el tipo de cosa que nuestro principio de creatividad fundamentada en la realidad debería detectar.
-
-7. 🟢 El routing sí tiene bastante sustancia
-
-routing.go no es simplemente pseudocódigo.
-
-Hay:
-
-DID real.
-extracción de clave pública.
-distancia XOR.
-rings.
-límites de peers.
-health state.
-latency.
-jitter.
-pérdida.
-cuarentena.
-eviction.
-roaming.
-locks concurrentes.
-
-La FSM:
-
-HEALTHY
-   ↓
-DEGRADED
-   ↓
-UNSTABLE
-   ↓
-UNREACHABLE
-   ↓
-QUARANTINED
-
-es interesante para el concepto que veníamos desarrollando de nodos buenos que reciben más recursos y nodos problemáticos que pierden privilegios.
-
-Pero no llamaría todavía a esto "routing Kleinberg probado a escala".
-
-Es:
-
-un algoritmo de selección/routing local inspirado en Kleinberg con métricas adicionales.
-
-Eso es mucho más preciso.
-
-8. 🟠 El DHT no es todavía una DHT completa
-
-El propio comentario de dht_kademlia.go lo reconoce:
-
-"No constituye una DHT distribuida completa con RPCs de red"
-
-Y estoy de acuerdo.
-
-Actualmente tienes:
-
-NodeID
-XOR distance
-K-buckets
-replacement cache
-FindClosest
-
-Eso es una tabla de routing Kademlia local.
-
-Faltan las operaciones distribuidas propiamente tales:
-
-PING
-FIND_NODE
-FIND_VALUE
-STORE
-iterative lookup
-alpha concurrency
-timeouts
-republishing
-expiration
-network discovery
-
-Por tanto:
+Por tanto yo separaría claramente:
 
 HECHO
 
-Kademlia-style routing table local.
+Hay código criptográfico PQC funcional.
+
+de
+
+HECHO
+
+Hay tests de PQC.
+
+de
 
 NO DEMOSTRADO
 
-DHT distribuida funcional.
+Todo el tráfico de datos de la red física está protegido por esa sesión PQC.
 
-Eso debería mantenerse explícito.
+Esas tres afirmaciones no son equivalentes.
 
-9. 🔴 La "malla planetaria" todavía es simulación
+4. El supuesto "zero-copy" tiene una contradicción concreta
 
-Aquí encontré algo muy importante.
+En main.go se hace:
 
-planetary_mesh.go crea:
+pktBuf := bufferPool.Acquire(n)
+copy(pktBuf.RawSlice(), buf[:n])
 
-node-000
-node-001
+pero inmediatamente después:
+
+cbor.Unmarshal(buf[:n], &packet)
+
+Es decir:
+
+UDP → buf
+       │
+       ├── copy → PacketBuffer
+       │
+       └── CBOR.Unmarshal(buf)
+
+El PacketBuffer no es el buffer que utiliza el parser.
+
+Después se libera:
+
+pktBuf.Release()
+
+Por lo tanto el pool existe, pero no elimina esa copia ni constituye zero-copy del camino principal de recepción.
+
+Esto es exactamente el tipo de cosa que yo corregiría antes de afirmar:
+
+"zero-copy certificado"
+
+El benchmark puede perfectamente mostrar 0 B/op en otro pipeline, y simultáneamente el main hacer una copia por paquete.
+
+5. Hay otra cosa que me llamó mucho la atención: el descubrimiento contradice tu principio de "la red escucha, no grita"
+
+El proyecto que veníamos diseñando tenía una idea bastante clara:
+
+no hacer broadcast constante; consultar cuando sea necesario.
+
+Pero AutonomousDiscoveryEngine hace periódicamente:
+
+cada 12 segundos
+    ↓
+STUN
+    ↓
+publicación beacon
+    ↓
+broadcast local
+    ↓
+probe peers
+    ↓
+rendezvous
+
+Y específicamente:
+
+for _, p := range []int{7777, 7778, 7001, 8080} {
+    PacketConn.WriteTo(... IPv4bcast ...)
+}
+
+Eso es broadcast periódico.
+
+No necesariamente es incorrecto para una fase experimental, pero sí contradice la filosofía que tú estabas buscando para IPv7:
+
+Nodo silencioso
+      ↓
+necesita algo
+      ↓
+consulta dirigida
+      ↓
+respuesta
+
+Yo no dejaría el broadcast como mecanismo fundamental.
+
+Lo convertiría en:
+
+Nivel 1 → aprendizaje local pasivo
+Nivel 2 → consulta dirigida
+Nivel 3 → rendezvous
+Nivel 4 → STUN
+Nivel 5 → relay/fallback
+
+y el broadcast solamente como mecanismo opcional de LAN.
+
+6. Hay una contradicción en la documentación de Kleinberg
+
+La documentación dice:
+
+Kleinberg Router de 12 anillos
+
+pero el código que revisé tiene:
+
+NewKleinbergRouter()
+
+que utiliza:
+
+DefaultRouterConfig()
+
+y el comentario indica:
+
+// 16 anillos, 256 pares
+
+Mientras que main.go imprime:
+
+Kleinberg Router (12 Anillos)
+
+Eso es un error concreto de coherencia.
+
+No es solamente documentación.
+
+Puedes terminar ejecutando:
+
+16 rings
+
+mientras la consola dice:
+
+12 rings
+
+Hay que tener una única fuente de verdad.
+
+7. Encontré además un problema en el pipeline de CI
+
+src/go.mod declara:
+
+go 1.26.4
+
+pero .github/workflows/release.yml instala:
+
+go-version: '1.24'
+
+Eso es inconsistente.
+
+El workflow intenta compilar con una versión inferior a la versión mínima declarada por el módulo.
+
+Esto debería cambiarse inmediatamente a la versión realmente requerida, o mejor:
+
+go-version-file: src/go.mod
+
+si el mecanismo utilizado por Actions lo permite en la configuración final.
+
+Este es un bug de infraestructura, no una opinión arquitectónica.
+
+8. Telemetría: no llamaría "lock-free" al ring buffer actual
+
+TelemetryRingBuffer utiliza atómicos para:
+
+head
+packetsTx
+packetsRx
 ...
 
-en una retícula 2D artificial.
+pero al escribir la entrada hace:
 
-Luego genera:
+rb.mu.Lock()
+rb.entries[idx] = event
+rb.mu.Unlock()
 
-ShortLinks
-LongLinks
+Por lo tanto el registro de eventos sí utiliza un mutex.
 
-con probabilidad:
+Puede ser muy rápido. Puede tener baja contención.
 
-1 / distance²
+Pero:
 
-Eso sirve como simulación matemática de Kleinberg.
+no es lock-free.
 
-Pero no demuestra una malla planetaria real.
+Yo cambiaría la documentación antes que el código, salvo que realmente quieras implementar un ring buffer MPSC/MPMC lock-free.
 
-Más importante todavía:
+9. El proyecto tiene demasiadas cosas para llamarse "núcleo mínimo"
 
-SimulateFailure()
+La estructura actual tiene:
 
-utiliza:
-
-rand.Float64()
-
-mientras la construcción usa un RNG local determinista.
-
-Y el test:
-
-SimulateFailure(0.10)
-
-no comprueba realmente que la red continúe funcionando después de la caída.
-
-Solo registra cuántos nodos cayeron.
-
-Por tanto el nombre:
-
-Scale50NodesAndResilience
-
-es demasiado fuerte.
-
-Realmente prueba:
-
-Scale50NodesAndFailureSimulation
-
-No resiliencia.
-
-10. 🟠 El pacing tiene una buena idea, pero no es todavía control de congestión
-
-PacketPacer utiliza correctamente un token bucket:
-
-golang.org/x/time/rate
-
-y además:
-
-MaxBurstPackets = 1
-
-Esto encaja muy bien con tu idea anterior:
-
-velocidad estable en lugar de ráfagas + pérdida.
-
-Pero hay un detalle fundamental:
-
-BottleneckRateBytesPerSec
-
-es un valor configurado.
-
-No se está estimando automáticamente el verdadero:
-
-BtlBw
-RTprop
-
-Por tanto:
-
-IMPLEMENTADO
-
-Pacing token bucket.
-
-NO IMPLEMENTADO
-
-BBR.
-
-La propia documentación lo reconoce, y eso está bien.
-
-Yo incluso eliminaría temporalmente cualquier referencia a BBR del núcleo hasta tener una implementación real.
-
-11. 🔴 Hay una inconsistencia muy importante entre la auditoría y el código
-
-La auditoría dice:
-
-Health Score Global: 99%
-
-y:
-
-APROBADO CON EXCELENCIA
-
-y:
-
-production-ready
-
-Pero el propio código todavía contiene:
-
-fallback criptográfico no-Ml-KEM;
-ML-DSA que no es ML-DSA;
-DHT que no es DHT distribuida;
-planetary mesh simulada;
-resiliencia no realmente verificada;
-keystore privado dentro del repositorio.
-
-Por lo tanto yo no usaría ese 99%.
-
-No porque el proyecto sea malo, sino porque ese número está mezclando:
-
-"tests pasan"
-
-con:
-
-"protocolo seguro y demostrado"
-
-Son cosas diferentes.
-
-12. Lo más interesante del proyecto
-
-Después de revisar el código, creo que el núcleo que vale la pena conservar es bastante más pequeño que todo el repositorio.
-
-Yo lo reduciría conceptualmente a:
-
-                    I7
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-     IDENTITY     CONTAINER     SESSION
-        │            │            │
-        └────────────┼────────────┘
-                     │
-                 PATH / MTU
-                     │
-                  ROUTING
-                     │
-             ┌───────┴───────┐
-             │               │
-            UDP             TUN
-
-Y alrededor:
-
-PQC
-Pacing
-Discovery
-NAT traversal
+L0
+L1
+L2
+Core
+WASM
+TUN
+SOCKS5
+WebUI
 DHT
-Gateway
-VPN
-Applications
+Kademlia
+STUN
+NAT traversal
+UPnP
+TLS masquerade
+Sphinx
+Blind rendezvous
+UIN
+Egress
+QoS
+Memory arbiter
+Mobility anchor
+Shadow devices
+Planetary mesh
+...
 
-como módulos.
+Esto no significa que estén mal.
 
-Esto se acerca mucho más a la filosofía que hemos venido buscando:
+El problema es qué consideramos parte de IPv7 fundamental.
 
-el núcleo transporta estructura, no semántica.
+Yo reduciría conceptualmente el núcleo a:
 
-13. Mi clasificación actual
-Componente	Mi evaluación
-Identidad Ed25519	🟢 Real
-DID derivado de clave	🟢 Real
-IPv4/IPv6 virtual derivada	🟢 Implementado
-UDP	🟢 Real
-ChaCha20-Poly1305	🟢 Real
-ML-KEM-768 L0	🟢 Real
-X25519 + ML-KEM	🟡 Real con diseño híbrido que debe limpiarse
-X-Wing	🟡 Implementación funcional que requiere validación externa/interoperabilidad
-ML-DSA-65	🔴 La implementación mostrada no es ML-DSA-65
-Token Bucket	🟢 Real
-BBR autónomo	🔴 No implementado
-Routing XOR/Kleinberg	🟡 Implementado localmente
-Kademlia routing table	🟢 Implementado localmente
-DHT distribuida	🔴 No implementada
-Planetary Mesh	🟠 Simulación
-Resiliencia planetaria	🔴 No demostrada
-VPN/TUN	🟠 Hay implementación, falta validar extremo a extremo en escenarios reales
-Seguridad del repositorio	🔴 Problema crítico por clave privada versionada
-14. Qué haría ahora
+                 IPv7 CORE
 
-Yo no agregaría ninguna funcionalidad nueva todavía.
+             ┌──────────────┐
+             │   IDENTITY   │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │   OBJECT     │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │  CONTAINER   │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │   SESSION    │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │   CHANNEL    │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │    PATH      │
+             └──────┬───────┘
+                    │
+             ┌──────▼───────┐
+             │  TRANSPORT   │
+             └──────────────┘
 
-Haría una fase que llamaría:
+Y después:
 
-HARDENING-0.7.1
+          EXTENSIONES
+              │
+     ┌────────┼────────┐
+     │        │        │
+    TUN      STUN     DHT
+     │        │        │
+   SOCKS     NAT     Kademlia
+   WebUI     Relay    ...
 
-En este orden:
+Eso encaja muchísimo mejor con tu idea original de:
 
-1. 🔴 Eliminar identidad privada del Git
-2. 🔴 Rotar identidad
-3. 🔴 Eliminar fallback PQC
-4. 🔴 Separar ML-KEM real de mecanismos experimentales
-5. 🔴 Corregir ML-DSA: real o renombrarlo
-6. 🟠 Eliminar "99% / production-ready"
-7. 🟠 Separar:
-       DEMOSTRADO
-       IMPLEMENTADO
-       EXPERIMENTAL
-       HIPÓTESIS
-8. 🟠 Tests físicos 2 nodos
-9. 🟠 Tests físicos 3 nodos
-10. 🟠 MTU real
-11. 🟠 pérdida real
-12. 🟠 cambio de ruta
-13. 🟠 pacing real
-14. 🟡 recién después DHT
-15. 🟡 recién después WAN/NAT
-Y hay una regla que pondría en el proyecto:
+el core transporta estructura, no semántica.
 
-Ninguna función criptográfica puede degradar silenciosamente a otra función y seguir declarando el mismo algoritmo.
+10. Lo que sí me gusta especialmente
 
-Esa regla es particularmente importante para I7.
+Hay decisiones del v0.7 que considero buenas y que yo conservaría:
 
-Mi impresión después de esta revisión
+Identidad
+did:ipvn7:<Ed25519 public key>
 
-El proyecto ya dejó de ser simplemente una idea. Hay bastante implementación real.
+Es simple y determinista.
 
-Pero también veo que el repositorio está entrando en una fase peligrosa: la arquitectura está creciendo más rápido que la demostración física de cada componente.
+Separación físico/lógico
+DID
+ ↓
+PhysicalAddr
 
-Y eso es exactamente lo que conviene detener ahora.
+Esto permite movilidad sin cambiar identidad.
 
-La siguiente etapa no debería ser "hacer IPv7 más grande".
+MTU explícito
+1280 bytes
 
-Debería ser:
+es una decisión clara y comprobable.
 
-hacer que cada pieza que ya existe sea inequívocamente real, segura y demostrable.
+Router con estado de salud
 
-Repositorio ipvn7_0.7
+La idea:
+
+Healthy
+Degraded
+Unstable
+Unreachable
+Quarantined
+
+es mucho más útil que simplemente:
+
+reachable / unreachable
+
+y puede combinarse muy bien con tu idea anterior de dar más recursos a nodos buenos y limitar progresivamente a nodos problemáticos.
+
+Mobility Anchor
+
+Esta parte me parece especialmente interesante para tu arquitectura.
+
+La idea de:
+
+DID permanente
+       ↓
+locator cambia
+       ↓
+sesión continúa
+
+encaja muy bien con el IPv7 que veníamos diseñando.
+
+11. Hay una cosa que NO compraría todavía: "Galactic Scale"
+
+El propio código hace:
+
+[GALACTIC MODE] Modo galáctico deshabilitado en v0.7.0
+
+Eso está bien.
+
+De hecho, me gusta más que pretender que funciona.
+
+La documentación también clasifica varias de estas cosas como no demostradas.
+
+Eso coincide con el principio que establecimos:
+
+DEMOSTRADO
+CONOCIDO
+INFERENCIA
+HIPÓTESIS
+EXPERIMENTO
+
+Mantendría esa disciplina.
+
+12. Mi diagnóstico final
+
+Yo pondría el proyecto así:
+
+IPvN7 v0.7
+
+L0 criptográfico             █████████░  90%
+Formato wire                 ████████░░  80%
+Identidad                    █████████░  90%
+Routing                      ████████░░  80%
+Mobility                     ████████░░  80%
+Pacing                       ███████░░░  70%
+Discovery                    ██████░░░░  60%
+NAT traversal                █████░░░░░  50%
+TUN                          ██████░░░░  60%
+Sesión PQC integrada         ████░░░░░░  40%
+ZTNA integrado al datapath   ███░░░░░░░  30%
+Zero-copy real del main      ███░░░░░░░  30%
+WAN hostil                   ██░░░░░░░░  20%
+Escalabilidad real           ██░░░░░░░░  20%
+
+No son puntuaciones del proyecto, sino una representación de cuánto veo efectivamente conectado/verificado en el código que pude inspeccionar.
+
+Los 5 cambios que haría antes de agregar otra función
+
+1. Seguridad primero
+
+UDP
+ ↓
+Decode
+ ↓
+Anti-replay
+ ↓
+Autenticación
+ ↓
+ZTNA
+ ↓
+Session
+ ↓
+AEAD
+ ↓
+DATA
+
+2. Conectar realmente la sesión PQC al datapath.
+
+3. Eliminar la falsa ruta zero-copy del main o hacerla verdaderamente zero-copy.
+
+4. Hacer que el descubrimiento no autorice automáticamente un DID antes de autenticación.
+
+5. Corregir las contradicciones de configuración/documentación:
+
+12 vs 16 anillos.
+Go 1.24 vs go 1.26.4.
+"lock-free" vs mutex.
+"zero-copy" vs copy().
+"PQC session" vs tráfico principal sin sesión PQC.
+La conclusión más importante
+
+Yo no seguiría agregando características a 0.7 todavía.
+
+El siguiente salto debería ser cerrar el camino mínimo de extremo a extremo:
+
+A
+│
+├─ Identity
+├─ Session PQC
+├─ Container
+├─ Channel
+├─ AEAD
+├─ UDP
+│
+▼
+B
+│
+├─ UDP
+├─ AEAD
+├─ Session
+├─ Container
+├─ Identity
+│
+▼
+Aplicación
+
+Y probar eso físicamente en A ↔ B, después:
+
+A ↔ B ↔ C
+
+y recién después volver a NAT, DHT, planetary mesh, satélites, etc.
+
+Eso convertiría el v0.7 de un conjunto grande de componentes funcionales en un protocolo realmente integrado.

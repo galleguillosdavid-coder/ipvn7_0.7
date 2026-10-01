@@ -99,14 +99,14 @@ func runDiagnostics(id *l0.Identity, router *l1.KleinbergRouter, pool *l1.Buffer
 	}
 	fmt.Println(" [✓] L1 Cortafuegos ZTNA Default-Deny: PASS")
 
-	// 6. L2 Telemetría Lock-Free
+	// 6. L2 Telemetría Ring Buffer Concurrente
 	telem.RecordEvent(l2.EventTxPacket, 1280, 50, 0)
 	snap := telem.Snapshot()
 	if snap.PacketsTx == 0 {
 		fmt.Println("[✗] L2 Telemetría: Registro fallido")
 		os.Exit(1)
 	}
-	fmt.Println(" [✓] L2 Telemetría Lock-Free Ring Buffer: PASS")
+	fmt.Println(" [✓] L2 Telemetría Ring Buffer Concurrente: PASS")
 
 	// 7. Verificación de puertos
 	checkPort := func(network, addr string) string {
@@ -123,6 +123,43 @@ func runDiagnostics(id *l0.Identity, router *l1.KleinbergRouter, pool *l1.Buffer
 	fmt.Printf(" [i] API & Dashboard HTTP :%d [%s]\n", tcpPort, tcpStatus)
 
 	fmt.Println("\n================================================================================")
-	fmt.Println("[DIAGNÓSTICO EXITOSO] Núcleo Funcional Universal v0.6 validado y 100% operativo.")
+	fmt.Println("[DIAGNÓSTICO EXITOSO] Núcleo Funcional Universal v0.7 validado y 100% operativo.")
 	fmt.Println("================================================================================")
+}
+
+type simpleMeshForwarder struct {
+	router     *l1.KleinbergRouter
+	conn       net.PacketConn
+	identity   *l0.Identity
+	sessionMgr *l1.PQCSessionManager
+	firewall   *l1.ZTNAFirewall
+	listenPort uint16
+}
+
+func (f *simpleMeshForwarder) ForwardToMesh(targetDID string, ipPacket []byte) error {
+	nextHop, err := f.router.FindNextHop(targetDID)
+	if err != nil {
+		return err
+	}
+	if f.firewall != nil {
+		decision, _ := f.firewall.EvaluateOutbound(targetDID, f.listenPort)
+		if decision != l1.DecisionAccept {
+			return fmt.Errorf("salida bloqueada por ZTNA para %s", targetDID)
+		}
+	}
+	var pkt *l0.Packet
+	if f.sessionMgr != nil && f.sessionMgr.HasSession(targetDID) {
+		pkt, err = f.sessionMgr.EncryptDataPacket(targetDID, ipPacket)
+		if err != nil {
+			return err
+		}
+	} else {
+		pkt = l0.NewPacket(l0.MsgTypeData, f.identity.DID(), targetDID, 0, nil, ipPacket)
+	}
+	raw, err := pkt.Encode()
+	if err != nil {
+		return err
+	}
+	_, err = f.conn.WriteTo(raw, nextHop.Locator.PhysicalAddr)
+	return err
 }

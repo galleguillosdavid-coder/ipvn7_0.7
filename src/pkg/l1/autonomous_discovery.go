@@ -33,6 +33,7 @@ type AutonomousDiscoveryEngine struct {
 	Kuzu       KuzuPeerUpserter
 	PacketConn net.PacketConn
 	ListenPort int
+	EnableBroadcast bool
 	running           bool
 	stopChan          chan struct{}
 	discovered        map[string]time.Time
@@ -158,9 +159,8 @@ func (e *AutonomousDiscoveryEngine) executeCycle() {
 			if err != nil {
 				continue
 			}
-			if e.Firewall != nil {
-				e.Firewall.AuthorizeDID(&DIDPolicy{DID: b.DID, AllowInbound: true, AllowOutbound: true, AllowRelay: true})
-			}
+			// El DID se añade como candidato de enrutamiento y se envía sondeo de apretón de manos.
+			// La autorización en el cortafuegos ZTNA se efectúa ÚNICAMENTE tras autenticación criptográfica.
 			_ = e.Router.AddOrUpdatePeer(b.DID, udpAddr, 2.5)
 			if e.Kuzu != nil {
 				e.Kuzu.UpsertPeer(b.DID, "", "kleinberg_peer", false)
@@ -178,7 +178,7 @@ func (e *AutonomousDiscoveryEngine) executeCycle() {
 }
 
 func (e *AutonomousDiscoveryEngine) broadcastLocalBeacon() {
-	if e.PacketConn == nil {
+	if !e.EnableBroadcast || e.PacketConn == nil {
 		return
 	}
 	nonce := make([]byte, 16)

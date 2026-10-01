@@ -50,9 +50,12 @@ if ($warnings.Count -gt 0) {
 # 2. Analisis estatico go vet
 Write-Host "  -> Ejecutando analisis estatico (go vet)..." -ForegroundColor DarkGray
 try {
+    Push-Location "$RepoRoot\src"
     $vetOut = go vet ./pkg/... ./cmd/... 2>&1
+    Pop-Location
     Write-Host "  [OK] go vet paso sin observaciones." -ForegroundColor Green
 } catch {
+    Pop-Location
     Write-Host "  [ERROR] Fallo en go vet: $_" -ForegroundColor Red
     $violations += [PSCustomObject]@{ File = "go vet"; Lines = 0 }
 }

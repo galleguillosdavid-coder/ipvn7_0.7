@@ -18,95 +18,64 @@ import (
 	"ipvn7/pkg/l1"
 	"ipvn7/pkg/l2"
 
-	"github.com/fxamacker/cbor/v2"
 )
 
-type simpleMeshForwarder struct {
-	router   *l1.KleinbergRouter
-	conn     net.PacketConn
-	identity *l0.Identity
-}
-
-func (f *simpleMeshForwarder) ForwardToMesh(targetDID string, ipPacket []byte) error {
-	nextHop, err := f.router.FindNextHop(targetDID)
-	if err != nil {
-		return err
-	}
-	pkt := l0.NewPacket(l0.MsgTypeData, f.identity.DID(), targetDID, 0, nil, ipPacket)
-	raw, err := pkt.Encode()
-	if err != nil {
-		return err
-	}
-	_, err = f.conn.WriteTo(raw, nextHop.Locator.PhysicalAddr)
-	return err
-}
-
 func main() {
-	keystorePath := flag.String("keystore", filepath.Join("keystore", "node_identity.key"), "Ruta del archivo keystore")
-	listenPort := flag.Int("port", 7777, "Puerto UDP de transporte físico")
-	peerAddr := flag.String("peer", "", "Dirección del par inicial (ej: 192.168.1.106:7777)")
-	galacticMode := flag.Bool("galactic", false, "Activar modo Galáctica Scale (trillones de nodos)")
-	socks5Port := flag.Int("socks5", 10807, "Puerto gateway universal (HTTP CONNECT + SOCKS5) para capturar tráfico")
-	tunMode := flag.Bool("tun", false, "Activar modo TUN/TAP nativo de kernel")
-	captureWeb := flag.Bool("capture-web", false, "Activar captura inmediata de tráfico web (por defecto inicia desconectado con botón)")
-	noElevate := flag.Bool("no-elevate", false, "No intentar auto-elevación a Administrador")
-	debugMode := flag.Bool("debug", false, "Activar registro detallado de depuracion en consola y archivo")
-	logPath := flag.String("logfile", filepath.Join("data", "ipvn7.log"), "Ruta del archivo de registro persistente")
-	webPort := flag.Int("web-port", 7070, "Puerto HTTP del panel de control interactivo")
-	showVersion := flag.Bool("version", false, "Muestra la versión del sistema y sale")
+	keystorePath := flag.String("keystore", filepath.Join("keystore", "node_identity.key"), "Ruta keystore")
+	listenPort := flag.Int("port", 7777, "Puerto UDP")
+	peerAddr := flag.String("peer", "", "Par inicial")
+	galacticMode := flag.Bool("galactic", false, "Modo Galáctica Scale")
+	socks5Port := flag.Int("socks5", 10807, "Puerto gateway universal")
+	tunMode := flag.Bool("tun", false, "Modo TUN/TAP")
+	captureWeb := flag.Bool("capture-web", false, "Captura web inmediata")
+	noElevate := flag.Bool("no-elevate", false, "No auto-elevar")
+	debugMode := flag.Bool("debug", false, "Depuración")
+	logPath := flag.String("logfile", filepath.Join("data", "ipvn7.log"), "Ruta log")
+	webPort := flag.Int("web-port", 7070, "Puerto WebUI")
+	showVersion := flag.Bool("version", false, "Muestra versión")
 	flag.Parse()
 
 	if *showVersion {
 		info := core.GetVersionInfo()
-		fmt.Printf("ipvn7 Sovereign Network OS %s (Build: %s, WireVersion: 0x%02x, Platform: %s/%s)\n",
-			info.Version, info.BuildVersion, info.WireVersion, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("ipvn7 %s (Build: %s, WireVersion: 0x%02x, %s/%s)\n", info.Version, info.BuildVersion, info.WireVersion, runtime.GOOS, runtime.GOARCH)
 		os.Exit(0)
 	}
 
-	// 0. Inicializar sistema de logs persistente dual (consola + archivo en disco)
 	if err := core.InitLogger(*logPath, *debugMode); err != nil {
-		fmt.Fprintf(os.Stderr, "[AVISO] No se pudo inicializar archivo de log en %s: %v\n", *logPath, err)
+		fmt.Fprintf(os.Stderr, "[AVISO] Log en %s: %v\n", *logPath, err)
 	}
 	defer core.CloseLogger()
-
 	core.LogInfo("=== ipvn7 NOS v0.7.0 (PID: %d, Admin: %v, Plataforma: %s) ===", os.Getpid(), core.IsElevated(), runtime.GOOS)
 
-	// Auto-elevación a Administrador (Mandato AGENTS.md: privilegios de administrador autoejecutados)
 	if runtime.GOOS == "windows" && !core.IsElevated() && !*noElevate {
-		core.LogInfo("[*] Solicitando auto-elevación con privilegios de Administrador (Kernel L3 TUN)...")
 		elevatedArgs := append(os.Args[1:], "-tun", "-no-elevate")
-		if *debugMode {
-			elevatedArgs = append(elevatedArgs, "-debug")
-		}
+		if *debugMode { elevatedArgs = append(elevatedArgs, "-debug") }
 		if core.RequestSelfElevation(elevatedArgs) {
-			core.LogInfo("[+] Proceso elevado lanzado en consola interactiva permanente. Cerrando lanzador inicial.")
 			os.Exit(0)
 		}
-		core.LogWarn("[!] Permisos de Administrador no concedidos o cancelados por el usuario.")
-		core.LogInfo("[*] Fallback automático: Continuando en Modo Usuario (Universal Gateway HTTP/SOCKS5)...")
 	}
-
-	// Si el proceso cuenta con privilegios elevados, purgar residuos en memoria y activar TUN L3
 	if core.IsElevated() {
 		core.TerminateConflictingProcesses(nil)
-		if !*tunMode {
-			*tunMode = true
-			core.LogInfo("[+] Privilegios de Administrador verificados: Kernel TUN L3 activado.")
-		}
+		if !*tunMode { *tunMode = true }
 	}
 
 	var identity *l0.Identity
 	var err error
 	if identity, err = l0.LoadFromFile(*keystorePath); err != nil {
 		if identity, err = l0.GenerateIdentity(); err != nil {
-			fmt.Fprintf(os.Stderr, "[FATAL L0] Error generando entropía: %v\n", err); os.Exit(1)
+			fmt.Fprintf(os.Stderr, "[FATAL] Entropía: %v\n", err); os.Exit(1)
 		}
 		_ = identity.SaveToFile(*keystorePath)
 	}
 
 	router := l1.NewKleinbergRouter(identity)
-	bufferPool := l1.NewBufferPool()
 	firewall := l1.NewZTNAFirewall(true)
+	hybridKeys, err := l1.GenerateHybridKeyPair(identity.DID())
+	if err != nil {
+		core.LogError("[PQC] Error generando claves híbridas: %v", err)
+	}
+	sessionMgr := l1.NewPQCSessionManager(identity, hybridKeys, firewall)
+	antiReplay := l0.NewAntiReplayFilter()
 
 	if *galacticMode {
 		fmt.Println("[GALACTIC MODE] Modo galáctico deshabilitado en v0.7.0")
@@ -114,7 +83,7 @@ func main() {
 
 	telemetry := l2.NewTelemetryRingBuffer()
 	fmt.Printf("[L0 DID]: %s | [IPv4 Virtual]: %s\n", identity.DID(), identity.IPv4())
-	fmt.Printf("[L1]: Kleinberg Router (12 Anillos) | ZTNA Default-Deny\n")
+	fmt.Printf("[L1]: Kleinberg Router (%d Anillos) | ZTNA Default-Deny\n", router.GetConfig().NumRings)
 	fmt.Println("================================================================================")
 
 	listenAddr := fmt.Sprintf("0.0.0.0:%d", *listenPort)
@@ -160,30 +129,18 @@ func main() {
 		core.LogInfo("[+] Panel de control interactivo activo en http://127.0.0.1:%d", *webPort)
 
 		proxyStr := fmt.Sprintf("http=127.0.0.1:%d;https=127.0.0.1:%d;socks=127.0.0.1:%d", *socks5Port, *socks5Port, *socks5Port)
-		webUI.SetCallbacks(
-			func() error {
-				core.LogInfo("[+] VPN activada desde botón de usuario (Proxy Universal 127.0.0.1:%d)", *socks5Port)
-				return core.SetWindowsUserProxy(proxyStr, nil)
-			},
-			func() error {
-				core.LogInfo("[-] VPN desactivada desde botón de usuario. Restaurando Internet directo.")
-				return core.ClearWindowsUserProxy(nil)
-			},
-			func() {
-				core.LogInfo("[*] Cerrando aplicación y restaurando conexión directa...")
-				_ = core.ClearWindowsUserProxy(nil)
-			},
-		)
+		enableVPN := func() error { return core.SetWindowsUserProxy(proxyStr, nil) }
+		disableVPN := func() error { return core.ClearWindowsUserProxy(nil) }
+		webUI.SetCallbacks(enableVPN, disableVPN, func() { _ = disableVPN() })
 
 		if *captureWeb {
-			_ = core.SetWindowsUserProxy(proxyStr, nil)
+			_ = enableVPN()
 			webUI.SetVPNState("connected")
 		} else {
-			_ = core.ClearWindowsUserProxy(nil)
+			_ = disableVPN()
 			webUI.SetVPNState("disconnected")
 		}
 
-		// Lanzar automáticamente la ventana tipo app nativa
 		core.LaunchDesktopWindow(fmt.Sprintf("http://127.0.0.1:%d", *webPort))
 	}
 
@@ -201,9 +158,12 @@ func main() {
 			fmt.Printf("[+] Interfaz TUN activa [%s] IP: %s (Red 10.7.0.0/16 enrutada a ipvn7).\n",
 				tunAdapter.Mode(), identity.IPv4())
 			forwarder := &simpleMeshForwarder{
-				router:   router,
-				conn:     conn,
-				identity: identity,
+				router:     router,
+				conn:       conn,
+				identity:   identity,
+				sessionMgr: sessionMgr,
+				firewall:   firewall,
+				listenPort: uint16(*listenPort),
 			}
 			tunRouter = l1.NewTUNRouter(tunAdapter, forwarder)
 			defer tunRouter.Close()
@@ -214,6 +174,7 @@ func main() {
 	if *peerAddr != "" {
 		if remoteAddr, err := net.ResolveUDPAddr("udp", *peerAddr); err == nil {
 			initPkt := l0.NewPacket(l0.MsgTypeRoamingUpdate, identity.DID(), "", 0, nil, nil)
+			_ = initPkt.SignPacket(identity)
 			if raw, err := initPkt.Encode(); err == nil {
 				_, _ = conn.WriteTo(raw, remoteAddr)
 			}
@@ -224,7 +185,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 7. Bucle de recepción UDP
+	// 7. Bucle de recepción UDP con seguridad integrada (ZTNA + Anti-Replay + PQC)
 	buf := make([]byte, l0.MaxPacketSize*2)
 	go func(ctx context.Context) {
 		for {
@@ -251,66 +212,99 @@ func main() {
 				continue
 			}
 
-			// Adquisición de búfer Zero-Copy
-			pktBuf := bufferPool.Acquire(n)
-			copy(pktBuf.RawSlice(), buf[:n])
+			// Deserialización canónica directa Zero-Copy
+			packet, err := l0.DecodePacket(buf[:n])
+			if err != nil {
+				continue
+			}
 			telemetry.RecordEvent(l2.EventRxPacket, uint32(n), 1100, 0)
 
-			// Procesamiento mínimo de paquetes usando APIs existentes
-			var packet l0.Packet
-			err = cbor.Unmarshal(buf[:n], &packet)
-			if err != nil {
-				// Paquete inválido o malformado
-				pktBuf.Release()
+			// Anti-Replay: validación de secuencia (RFC 4303 ventana de 1024 bits)
+			if packet.Sequence > 0 && !antiReplay.ValidateAndUpdate(packet.Sequence) {
+				telemetry.RecordEvent(l2.EventDrop, uint32(n), 0, 0)
 				continue
 			}
 
-			// Verificar magic bytes
-			if packet.Magic != l0.MagicBytes || packet.Version != l0.WireVersion {
-				pktBuf.Release()
-				continue
-			}
+			udpAddr, isUDP := fromAddr.(*net.UDPAddr)
 
-			if udpAddr, ok := fromAddr.(*net.UDPAddr); ok && packet.SourceDID != identity.DID() && packet.SourceDID != "" {
-				_ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.0)
-			}
-
-			// Procesar según tipo de paquete
+			// Despacho gobernado por ZTNA y PQC
 			switch packet.Type {
-			case l0.MsgTypeHandshakeInit, l0.MsgTypeHandshakeResp, l0.MsgTypeHandshakeAuth:
-				fmt.Printf("[HANDSHAKE] Recibido tipo %d de %s\n", packet.Type, packet.SourceDID)
-
-			case l0.MsgTypeData:
-				if packet.DestDID == identity.DID() {
-					if tunRouter != nil {
-						_ = tunRouter.InjectFromMesh(packet.Payload)
-					} else {
-						fmt.Printf("[DATOS] Recibido de %s (%d bytes)\n", packet.SourceDID, len(packet.Payload))
+			case l0.MsgTypeHandshakeInit:
+				if respPkt, err := sessionMgr.HandleHandshakeInitPacket(packet); err == nil {
+					if isUDP {
+						_ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.0)
 					}
-				} else {
-					nextHop, err := router.FindNextHop(packet.DestDID)
-					if err == nil && nextHop != nil {
-						conn.WriteTo(buf[:n], nextHop.Locator.PhysicalAddr)
-						telemetry.RecordEvent(l2.EventTxPacket, uint32(n), 1100, 0)
+					if raw, err := respPkt.Encode(); err == nil {
+						_, _ = conn.WriteTo(raw, fromAddr)
+					}
+					fmt.Printf("[PQC] Handshake completado con %s (ML-KEM-768 FIPS 203)\n", packet.SourceDID)
+				}
+
+			case l0.MsgTypeHandshakeResp:
+				if err := sessionMgr.HandleHandshakeRespPacket(packet); err == nil {
+					if isUDP {
+						_ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.0)
+					}
+					fmt.Printf("[PQC] Sesión 1-RTT confirmada con %s\n", packet.SourceDID)
+				}
+
+			case l0.MsgTypeRoamingUpdate:
+				if packet.SourceDID != identity.DID() {
+					if valid, err := packet.VerifyPacketSignature(); err == nil && valid {
+						if isUDP {
+							_ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.1)
+						}
+						firewall.AuthorizeDID(&l1.DIDPolicy{DID: packet.SourceDID, AllowInbound: true, AllowOutbound: true, AllowRelay: true})
+						fmt.Printf("[ROAMING] %s autenticado y autorizado por ZTNA\n", packet.SourceDID)
+						respPkt := l0.NewPacket(l0.MsgTypeKeepAlive, identity.DID(), packet.SourceDID, 0, nil, nil)
+						if raw, err := respPkt.Encode(); err == nil {
+							_, _ = conn.WriteTo(raw, fromAddr)
+						}
 					}
 				}
 
 			case l0.MsgTypeKeepAlive:
-				fmt.Printf("[KEEPALIVE] Recibido de %s\n", packet.SourceDID)
+				// Latido keepalive recibido de par activo
 
-			case l0.MsgTypeRoamingUpdate:
-				if packet.SourceDID != identity.DID() {
-					fmt.Printf("[ROAMING] %s actualizó su dirección\n", packet.SourceDID)
-					if udpAddr, ok := fromAddr.(*net.UDPAddr); ok {
-						respPkt := l0.NewPacket(l0.MsgTypeKeepAlive, identity.DID(), packet.SourceDID, 0, nil, nil)
-						if raw, err := respPkt.Encode(); err == nil {
-							_, _ = conn.WriteTo(raw, udpAddr)
+			case l0.MsgTypeData:
+				// ZTNA Default-Deny: evaluación estricta en el camino de datos principal
+				decision, reason := firewall.EvaluateInbound(packet.SourceDID, uint16(*listenPort))
+				if decision != l1.DecisionAccept {
+					telemetry.RecordEvent(l2.EventDrop, uint32(n), 0, 0)
+					core.LogWarn("[ZTNA DENEGADO] Paquete de %s descartado: %s", packet.SourceDID, reason)
+					continue
+				}
+
+				if isUDP && packet.SourceDID != identity.DID() && packet.SourceDID != "" {
+					_ = router.AddOrUpdatePeer(packet.SourceDID, udpAddr, 1.0)
+				}
+
+				if packet.DestDID == identity.DID() {
+					payload := packet.Payload
+					// Si existe sesión PQC activa, descifrar con ChaCha20-Poly1305
+					if sessionMgr.HasSession(packet.SourceDID) {
+						decrypted, err := sessionMgr.DecryptDataPacket(packet)
+						if err != nil {
+							telemetry.RecordEvent(l2.EventDrop, uint32(n), 0, 0)
+							continue
+						}
+						payload = decrypted
+					}
+
+					if tunRouter != nil {
+						_ = tunRouter.InjectFromMesh(payload)
+					} else {
+						fmt.Printf("[DATOS PQC] Recibido de %s (%d bytes)\n", packet.SourceDID, len(payload))
+					}
+				} else {
+					if outDec, _ := firewall.EvaluateOutbound(packet.DestDID, uint16(*listenPort)); outDec == l1.DecisionAccept {
+						if nextHop, err := router.FindNextHop(packet.DestDID); err == nil && nextHop != nil {
+							conn.WriteTo(buf[:n], nextHop.Locator.PhysicalAddr)
+							telemetry.RecordEvent(l2.EventTxPacket, uint32(n), 1100, 0)
 						}
 					}
 				}
 			}
-
-			pktBuf.Release()
 		}
 	}(ctx)
 

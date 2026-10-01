@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	RingBufferSize = 4096 // Búfer de potencia de 2 para indexación bitwise ultra-rápida (lock-free)
+	RingBufferSize = 4096 // Búfer de potencia de 2 para indexación bitwise ultra-rápida
 	RingBufferMask = RingBufferSize - 1
 )
 
@@ -21,7 +21,7 @@ const (
 	EventAnomaly  uint8 = 4
 )
 
-// TelemetryEvent representa un registro atómico de telemetría de red (<28 ns)
+// TelemetryEvent representa un registro de telemetría de red
 type TelemetryEvent struct {
 	Timestamp int64
 	Type      uint8
@@ -30,7 +30,7 @@ type TelemetryEvent struct {
 	PeerHash  uint32
 }
 
-// TelemetryRingBuffer implementa un búfer circular de ultra-alto rendimiento sin bloqueos
+// TelemetryRingBuffer implementa un búfer circular de ultra-alto rendimiento con sincronización concurrente
 type TelemetryRingBuffer struct {
 	head    atomic.Uint64
 	tail    atomic.Uint64

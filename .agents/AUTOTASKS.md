@@ -96,10 +96,15 @@ Cadencia operativa: Disparo periódico cada 10 minutos activado de forma obligat
 | **TASK-093** | Rescate de Conceptos Legacy & Señalización Global Cloud Firebase (DEC-133) | Fase 59 | **COMPLETED** | [`docs/09_LECCIONES_Y_CONCEPTOS_LEGACY.md`](../docs/09_LECCIONES_Y_CONCEPTOS_LEGACY.md) / Rol T en ROLES.md / Firebase Hub |
 | **TASK-094** | Poda Preventiva L1 (Firewall & SOCKS5) y Restauración 100% Health Score (DEC-134) | Fase 59 | **COMPLETED** | Poda `firewall.go` (318L) y `socks5_gateway.go` (319L), 100% Health Score, 0 warnings / DEC-134 |
 | **TASK-095** | Sistema de Auto-Actualización Online Soberano 1-Clic (DEC-135) | Fase 60 | **COMPLETED** | `version_manager.go` (283L), endpoints WebUI, test con HTTP real, `version_manifest.json` / DEC-135 |
+| **TASK-096** | Cierre Integral de Auditoría Externa (ZTNA Datapath, 1-RTT PQC, Zero-Copy & Discovery) | Fase 61 | **COMPLETED** | [`docs/PLAN_CUMPLIMIENTO_AUDITORIA_EXTERNA.md`](../docs/PLAN_CUMPLIMIENTO_AUDITORIA_EXTERNA.md) / DEC-138 / 100% PASS |
 
 ---
 
 ## Registro de Ejecución y Trazabilidad
+
+### TASK-096: Cierre Integral de Auditoría Externa (DEC-138)
+* **Objetivo:** Cumplir al 100% los 5 bloques críticos identificados en `docs/auditoria externa.md`: 1) Integración de Firewall ZTNA Default-Deny en `src/cmd/ipvn7/main.go` en RX y TX sin auto-autorización en discovery; 2) Handshake 1-RTT PQC (ML-KEM-768 FIPS 203 + X25519) con empaquetado binario de 1136 bytes que respeta estrictamente el MTU canónico de 1280B y cifra el datapath con ChaCha20-Poly1305 (`src/pkg/l1/session_manager.go`); 3) Erradicación de la copia falsa en `main.go`, decodificando directamente el buffer de red con anti-replay; 4) Eliminación de broadcasts de descubrimiento UDP ruidosos por defecto; 5) Armonización de Go 1.24/1.26 en `go.mod` y CI, 12 anillos concéntricos Kleinberg y eliminación de reclamos "lock-free" en telemetría protegida por RWMutex.
+* **Resultado:** Suite unitaria `TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay` validando transmisión física loopback UDP con ZTNA y PQC; `scripts/verify_ipvn7_standard.ps1` con 100% PASS, 0 advertencias preventivas, Invariante Zero-Copy 31.24 ns/op (0 B/op, 0 allocs/op) y Health Score 100% (ÓPTIMO/EXCELENCIA). Formalizado en DEC-138.
 
 ### TASK-095: Sistema de Auto-Actualización Online Soberano 1-Clic
 * **Objetivo:** Implementar la infraestructura de auto-actualización en línea: `CheckOnlineUpdate` y `DownloadAndApplyUpdate` en `src/pkg/core/version_manager.go`, faro de versiones `dist/version_manifest.json`, endpoints HTTP REST (`/api/v1/update/check`, `/api/v1/update/apply`, `/api/v1/update/rollback`) en `WebUIServer`, banner visual 1-clic en la WebUI (`templates.go`), suite unitaria con servidor HTTP real (`version_manager_test.go`), manteniendo el 100% Health Score y $\le 400$ líneas. Formalizado en DEC-135.

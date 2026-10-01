@@ -291,10 +291,18 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - Adopción estricta de la Taxonomía de 4 Estados: DEMOSTRADO FÍSICAMENTE, IMPLEMENTADO, EXPERIMENTAL y NO DEMOSTRADO en documentación y código.
 - ❌ Prohibido: Utilizar HMAC o SHA256 simulando KEM; prohibido declarar éxito de NAT sin recepción de datagramas reales; prohibido pánico por tamaños no estándar en buffers.
 
+**DEC-138:** Cierre Integral de Auditoría Externa: ZTNA en Data Path (Default-Deny), Handshake 1-RTT PQC Wire Framing (1280B MTU), Discovery Silencioso y Cero-Copia Real
+- Integración directa del Firewall ZTNA en el bucle principal de recepción (`src/cmd/ipvn7/main.go`): Default-Deny activo tanto en paquetes de datos como en descubrimiento. Eliminada la auto-autorización en balizas de discovery de `src/pkg/l1/autonomous_discovery.go`.
+- Negociación e instauración del canal de datos cifrado mediante Handshake 1-RTT PQC (`src/pkg/l1/session_manager.go`): intercambio híbrido ML-KEM-768 FIPS 203 + X25519 empaquetado binario (`EphemeralX25519` + `Salt` + `PQCCiphertext` = 1136 bytes), respetando estrictamente el MTU canónico de 1280 bytes. Cifrado simétrico ChaCha20-Poly1305 para todo payload de datos.
+- Erradicación de la copia simulada (`pktBuf = append(...)`) en `main.go`, decodificando directamente el slice `rawBuf[:n]` con validación O(1) de anti-replay por ventana deslizante.
+- Saneamiento de ruido de red: desactivado el broadcast periódico ruidoso multi-puerto por defecto ("la red escucha, no grita").
+- Armonización técnica: Go 1.24/1.26 unificado en `go.mod` y CI GitHub Actions; eliminadas afirmaciones inexactas de "lock-free" en telemetría; arquitectura Kleinberg normalizada a 12 anillos concéntricos con K-buckets.
+- ❌ Prohibido: Admitir tráfico de datos no cifrado o con DIDs no autorizados en el datapath; prohibido rebasar el MTU de 1280B en handshakes KEM; prohibido auto-autorizar DIDs sin intervención explícita.
+
 ---
 
-**Última actualización:** 2026-09-30  
-**Total decisiones activas:** 55 (DEC-079 → DEC-137)  
+**Última actualización:** 2026-10-01  
+**Total decisiones activas:** 56 (DEC-079 → DEC-138)  
 **Estado:** Todas INVIOLABLE
 
 
