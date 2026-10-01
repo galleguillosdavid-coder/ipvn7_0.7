@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"ipvn7/pkg/interfaces"
 )
@@ -36,24 +37,34 @@ func ReleasePacketContext(pCtx *interfaces.PacketContext) {
 	packetContextPool.Put(pCtx)
 }
 
-
-// LinearPipeline implementa una línea de montaje secuencial y determinista (Pipes & Filters).
-type LinearPipeline struct {
-	mu         sync.RWMutex
+type pipelineSnapshot struct {
 	stages     []interfaces.PipelineStage
 	deadLetter interfaces.DeadLetterHandler
 }
 
+// LinearPipeline implementa una línea de montaje secuencial y determinista (Pipes & Filters).
+type LinearPipeline struct {
+	mu         sync.Mutex
+	stages     []interfaces.PipelineStage
+	deadLetter interfaces.DeadLetterHandler
+	snap       atomic.Pointer[pipelineSnapshot]
+}
+
 // NewLinearPipeline instancia una nueva línea de montaje sin estaciones.
 func NewLinearPipeline() *LinearPipeline {
-	return &LinearPipeline{
+	p := &LinearPipeline{
 		stages:     make([]interfaces.PipelineStage, 0),
 		deadLetter: &DefaultDeadLetterHandler{},
 	}
+	p.snap.Store(&pipelineSnapshot{
+		stages:     p.stages,
+		deadLetter: p.deadLetter,
+	})
+	return p
 }
 
 // AddStage añade una estación de procesamiento al final de la línea de producción.
-// Utiliza Copy-On-Write para permitir lectura sin asignación en Execute.
+// Utiliza Copy-On-Write con publicación atómica para permitir lectura lock-free en Execute.
 func (p *LinearPipeline) AddStage(stage interfaces.PipelineStage) interfaces.DataPipeline {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -61,6 +72,10 @@ func (p *LinearPipeline) AddStage(stage interfaces.PipelineStage) interfaces.Dat
 	copy(newStages, p.stages)
 	newStages[len(p.stages)] = stage
 	p.stages = newStages
+	p.snap.Store(&pipelineSnapshot{
+		stages:     p.stages,
+		deadLetter: p.deadLetter,
+	})
 	return p
 }
 
@@ -70,6 +85,10 @@ func (p *LinearPipeline) SetDeadLetterHandler(handler interfaces.DeadLetterHandl
 	defer p.mu.Unlock()
 	if handler != nil {
 		p.deadLetter = handler
+		p.snap.Store(&pipelineSnapshot{
+			stages:     p.stages,
+			deadLetter: p.deadLetter,
+		})
 	}
 }
 
@@ -77,21 +96,18 @@ func (p *LinearPipeline) SetDeadLetterHandler(handler interfaces.DeadLetterHandl
 // Si una estación dictamina descarte (Dropped=true) o retorna error,
 // el avance se detiene de inmediato y se entrega al Dead-Letter handler.
 func (p *LinearPipeline) Execute(ctx context.Context, pCtx *interfaces.PacketContext) error {
-	p.mu.RLock()
-	stages := p.stages
-	deadLetter := p.deadLetter
-	p.mu.RUnlock()
+	snap := p.snap.Load()
+	stages := snap.stages
+	deadLetter := snap.deadLetter
 
 	for _, stage := range stages {
-		select {
-		case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
 			pCtx.Dropped = true
 			pCtx.DropReason = "context_canceled"
 			if deadLetter != nil {
-				deadLetter.HandleDeadLetter(ctx, pCtx, stage.Name(), ctx.Err())
+				deadLetter.HandleDeadLetter(ctx, pCtx, stage.Name(), err)
 			}
-			return ctx.Err()
-		default:
+			return err
 		}
 
 		err := stage.Process(ctx, pCtx)

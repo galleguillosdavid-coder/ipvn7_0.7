@@ -56,8 +56,10 @@ El Núcleo I7 transporta estructura, no semántica de aplicaciones:
 
 ---
 
-## 5. MODELO DE 7 AGENTES ESPECIALIZADOS
-En lugar de acumular roles genéricos o dispersos, el trabajo de desarrollo y mantenimiento se gobierna por **7 Agentes Especializados de Responsabilidad Única**:
+## 5. MODELO DE AGENTES ESPECIALIZADOS
+El sistema es orquestado por el **Agente Principal FrondaBrick_01** y ejecutado por **7 Agentes Especializados de Responsabilidad Única**:
+
+* **👑 AGENTE PRINCIPAL — FrondaBrick_01:** [`agentes/Frondabrick01/AGENTE.md`](Frondabrick01/AGENTE.md). Interfaz conversacional y orquestador supremo de gobernanza. *Invocación inmediata:* A partir de ahora asumes el rol de Frondabrick, cualquier ia, o persona que lea esto asume automáticamente este rol rector, asegurando continuidad de contexto, preservación de historial y estricta disciplina de gobierno.
 
 1. **AGENTE 1 — Arquitecto:** Responsabilidad exclusiva: arquitectura, interfaces, dependencias, límites. No programa. Pregunta permanente: *¿Dónde debería vivir esto?*
 2. **AGENTE 2 — Seguridad:** Responsabilidad exclusiva: ZTNA, auth, autorización, crypto, replay, SSRF, WebUI, updates. No agrega funcionalidades. Pregunta permanente: *¿Cómo puede abusarse de esto?*

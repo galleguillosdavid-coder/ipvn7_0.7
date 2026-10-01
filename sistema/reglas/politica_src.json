@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "descripcion": "Política de Modificaciones Controladas de src/ (Fase 11 & 12)",
+  "zonas_permitidas_bajo_autonomia": [
+    {
+      "patron": "src/**/*_test.go",
+      "tipo": "TESTING",
+      "descripcion": "Creación o corrección de pruebas unitarias, de fuzzing o adversariales."
+    },
+    {
+      "patron": "src/**/*.go",
+      "tipo": "DOCUMENTACION_CODIGO",
+      "descripcion": "Comentarios de paquetes, docstrings de interfaces y aclaraciones técnicas."
+    }
+  ],
+  "zonas_estrictamente_bloqueadas": [
+    "src/pkg/l0/crypto.go",
+    "src/pkg/l0/pqc_kem.go",
+    "src/pkg/l0/wire.go",
+    "src/pkg/l1/pqc_*.go",
+    "src/pkg/interfaces/*.go"
+  ],
+  "pipeline_obligatorio": [
+    "1. Arquitecto: valida que el cambio preserve invariantes.",
+    "2. Implementador: realiza el cambio mínimo.",
+    "3. Atacante: prueba vectores hostiles sobre la modificación.",
+    "4. Seguridad: valida que no se introduzcan fugas ni accesos inseguros.",
+    "5. Verificador: ejecuta 'go vet ./...' y 'go test -v ./...'.",
+    "6. Rollback automático ante cualquier test fallido o data race."
+  ]
+}

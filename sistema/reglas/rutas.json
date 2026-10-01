@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "rutas": {
+    "CORE": {
+      "prefijos": ["src/"],
+      "criticidad": "MAXIMA",
+      "descripcion": "Núcleo de protocolo Go. Bloqueado salvo autorización explícita de código."
+    },
+    "INFRAESTRUCTURA": {
+      "prefijos": [".github/", ".vscode/"],
+      "criticidad": "ALTA",
+      "descripcion": "Workflows de CI y configuración de editor/sandbox."
+    },
+    "GOBIERNO": {
+      "prefijos": ["sistema/"],
+      "criticidad": "ALTA",
+      "descripcion": "Control plane, intención, plan, evidencias e historial."
+    },
+    "AGENTES": {
+      "prefijos": ["agentes/"],
+      "criticidad": "MEDIA",
+      "descripcion": "Definición de roles y responsabilidades agénticas."
+    },
+    "DOCUMENTACION": {
+      "prefijos": ["docs/", "guide/", "README.md"],
+      "criticidad": "BAJA",
+      "descripcion": "Manuales, especificaciones RFC y reportes informativos."
+    },
+    "SCRIPTS": {
+      "prefijos": ["scripts/"],
+      "criticidad": "MEDIA",
+      "descripcion": "Herramientas de automatización y suites de pruebas."
+    },
+    "BINARIOS": {
+      "prefijos": ["bin/", "dist/", "wintun/"],
+      "criticidad": "MAXIMA",
+      "descripcion": "Artefactos compilados y controladores de kernel. No editables a mano."
+    }
+  }
+}

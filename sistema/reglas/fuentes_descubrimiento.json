@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "fuentes_permitidas": [
+    {
+      "id": "GIT_STATUS",
+      "tipo": "INFRAESTRUCTURA",
+      "descripcion": "Archivos modificados, staged o untracked que requieran reconciliación.",
+      "comando": "git status --porcelain"
+    },
+    {
+      "id": "GO_VET",
+      "tipo": "CALIDAD_CODIGO",
+      "descripcion": "Advertencias de análisis estático en paquetes Go.",
+      "comando": "go vet ./..."
+    },
+    {
+      "id": "GO_TEST",
+      "tipo": "ESTABILIDAD",
+      "descripcion": "Fallos o regresiones en la suite de pruebas unitarias.",
+      "comando": "go test -v ./pkg/core ./pkg/l1"
+    },
+    {
+      "id": "REFERENCIAS_ROTAS",
+      "tipo": "DOCUMENTACION",
+      "descripcion": "Enlaces markdown hacia archivos inexistentes.",
+      "metodo": "inspeccion_enlaces_relativos"
+    },
+    {
+      "id": "TODOS_FIXMES",
+      "tipo": "DEUDA_TECNICA",
+      "descripcion": "Comentarios explícitos TODO / FIXME dejados en el código.",
+      "metodo": "grep_todos"
+    }
+  ]
+}

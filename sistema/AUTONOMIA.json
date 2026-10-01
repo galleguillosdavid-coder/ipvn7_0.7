@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "modo": "autonomo_controlado",
+  "inmutable_en_ejecucion": true,
+  "limites": {
+    "max_objetivos_por_ciclo": 3,
+    "max_iteraciones": 5,
+    "parada_ante_fallo": true,
+    "parada_ante_scope_violation": true
+  },
+  "permisos_autonomos": {
+    "buscar_objetivos": true,
+    "crear_plan": true,
+    "ejecutar_tests": true,
+    "corregir_documentacion": true,
+    "corregir_tests": true,
+    "modificar_src": false,
+    "eliminar_archivos": false,
+    "git_commit": false,
+    "git_push": false,
+    "cambiar_constitucion": false,
+    "ampliar_scope": false
+  }
+}

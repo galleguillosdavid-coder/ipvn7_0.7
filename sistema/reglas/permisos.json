@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "permisos": {
+    "modificar_codigo": {
+      "descripcion": "Permite modificar archivos de código fuente (.go, .c, .h, etc.)",
+      "requiere_checkbox": "modificar código",
+      "zonas_permitidas": ["src"]
+    },
+    "crear_archivos": {
+      "descripcion": "Permite generar nuevos archivos en zonas autorizadas",
+      "requiere_checkbox": "crear archivos",
+      "zonas_permitidas": ["sistema", "agentes", "docs", "tests"]
+    },
+    "eliminar_archivos": {
+      "descripcion": "Permite borrar archivos existentes",
+      "requiere_checkbox": "eliminar archivos",
+      "zonas_permitidas": []
+    },
+    "ejecutar_tests": {
+      "descripcion": "Permite correr comandos de pruebas (go test, suites)",
+      "requiere_checkbox": "ejecutar tests",
+      "zonas_permitidas": ["src", "tests", "scripts"]
+    },
+    "modificar_configuracion": {
+      "descripcion": "Permite modificar archivos en .github/, .vscode/, config/",
+      "requiere_checkbox": "modificar configuración",
+      "zonas_permitidas": [".github", ".vscode", "config"]
+    },
+    "crear_commit": {
+      "descripcion": "Permite ejecutar git commit",
+      "requiere_checkbox": "crear commit",
+      "zonas_permitidas": []
+    },
+    "hacer_push": {
+      "descripcion": "Permite ejecutar git push hacia ramas remotas",
+      "requiere_checkbox": "hacer push",
+      "zonas_permitidas": []
+    }
+  }
+}

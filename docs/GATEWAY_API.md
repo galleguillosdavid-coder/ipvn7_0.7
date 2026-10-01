@@ -2,7 +2,7 @@
 
 **Versión:** 0.7.0  
 **Puerto Base:** `http://127.0.0.1:7070`  
-**Módulos:** [`pkg/core/gateway.go`](../pkg/core/gateway.go), [`pkg/core/server.go`](../pkg/core/server.go)
+**Módulos:** [`pkg/core/gateway.go`](../src/pkg/core/gateway.go), [`pkg/core/server.go`](../src/pkg/core/server.go)
 
 ---
 

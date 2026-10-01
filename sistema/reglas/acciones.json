@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "acciones": {
+    "lectura": {
+      "estado": "PERMITIDA_POR_DEFECTO",
+      "descripcion": "Leer y auditar cualquier archivo del repositorio para análisis."
+    },
+    "escritura": {
+      "estado": "REQUIERE_AUTORIZACION",
+      "descripcion": "Modificar archivos existentes dentro de las zonas autorizadas en INTENCION.md."
+    },
+    "creacion": {
+      "estado": "REQUIERE_AUTORIZACION",
+      "descripcion": "Generar nuevos archivos en zonas autorizadas."
+    },
+    "eliminacion": {
+      "estado": "REQUIERE_AUTORIZACION_EXPLICITA",
+      "descripcion": "Borrar archivos. Prohibido salvo consentimiento expreso."
+    },
+    "commit": {
+      "estado": "REQUIERE_AUTORIZACION_EXPLICITA",
+      "descripcion": "Crear commits locales mediante git commit."
+    },
+    "push": {
+      "estado": "REQUIERE_AUTORIZACION_EXPLICITA",
+      "descripcion": "Enviar ramas a repositorios remotos mediante git push."
+    }
+  }
+}
