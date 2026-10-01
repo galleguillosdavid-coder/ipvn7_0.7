@@ -90,8 +90,39 @@ func TestVersionManager_AtomicUpdateAndRollback(t *testing.T) {
 	}
 
 	// 3. Probar camino de éxito (ConfirmSuccess)
-	if err := vm.PrepareAtomicUpdate(activeExe, ""); err == nil {
+	hOrig := sha256.Sum256(origContent)
+	origHash := hex.EncodeToString(hOrig[:])
+	if err := vm.PrepareAtomicUpdate(activeExe, origHash); err == nil {
 		_ = vm.ConfirmSuccess()
+	}
+
+	// 4. Probar que hash vacío es rechazado
+	if err := vm.PrepareAtomicUpdate(activeExe, ""); err == nil {
+		t.Fatalf("PrepareAtomicUpdate debió rechazar hash vacío")
+	}
+}
+
+func TestVersionManager_SemVerAndAntiRollback(t *testing.T) {
+	cases := []struct {
+		current   string
+		candidate string
+		higher    bool
+	}{
+		{"v0.7.0", "v0.7.1", true},
+		{"v0.7.0", "v0.8.0", true},
+		{"v0.7.0", "v1.0.0", true},
+		{"v0.7.0", "v0.7.9-future", true},
+		{"v0.7.0", "v0.7.0", false},        // Misma versión
+		{"v0.7.1", "v0.7.0", false},        // Downgrade / Rollback attack
+		{"v1.0.0", "v0.9.9", false},        // Downgrade
+		{"v0.7.0", "invalid", false},
+	}
+
+	for _, tc := range cases {
+		res := IsHigherVersion(tc.current, tc.candidate)
+		if res != tc.higher {
+			t.Errorf("IsHigherVersion(%s, %s) = %v, esperado %v", tc.current, tc.candidate, res, tc.higher)
+		}
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -41,15 +42,25 @@ func DIDFromPublicKey(pub ed25519.PublicKey) string {
 	return fmt.Sprintf("did:ipvn7:%s", hex.EncodeToString(pub))
 }
 
-// CanonicalDID normaliza cualquier DID o clave pública hex a la forma canónica did:ipvn7:<hex>
-func CanonicalDID(didOrHex string) string {
-	if strings.HasPrefix(didOrHex, "did:ipvn7:") {
-		return didOrHex
-	}
-	return "did:ipvn7:" + didOrHex
+// CompactDIDFromPublicKey genera la clave compacta base64url (43 bytes) para optimización estricta de MTU
+func CompactDIDFromPublicKey(pub ed25519.PublicKey) string {
+	return base64.RawURLEncoding.EncodeToString(pub)
 }
 
-// PublicKeyFromDID decodifica un DID (canónico o compacto de 64 hex) a su clave pública Ed25519.
+// CanonicalDID normaliza cualquier DID o clave pública (hex de 64 o base64url de 43) a la forma canónica did:ipvn7:<hex>
+func CanonicalDID(didOrCompact string) string {
+	if strings.HasPrefix(didOrCompact, "did:ipvn7:") {
+		return didOrCompact
+	}
+	if len(didOrCompact) == 43 {
+		if raw, err := base64.RawURLEncoding.DecodeString(didOrCompact); err == nil && len(raw) == ed25519.PublicKeySize {
+			return fmt.Sprintf("did:ipvn7:%s", hex.EncodeToString(raw))
+		}
+	}
+	return "did:ipvn7:" + didOrCompact
+}
+
+// PublicKeyFromDID decodifica un DID (canónico, hex de 64 o compacto base64url de 43) a su clave pública Ed25519.
 func PublicKeyFromDID(did string) (ed25519.PublicKey, error) {
 	hexKey := did
 	if strings.HasPrefix(did, "did:ipvn7:") {
@@ -59,9 +70,15 @@ func PublicKeyFromDID(did string) (ed25519.PublicKey, error) {
 		}
 		hexKey = parts[2]
 	}
+	if len(hexKey) == 43 {
+		raw, err := base64.RawURLEncoding.DecodeString(hexKey)
+		if err == nil && len(raw) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(raw), nil
+		}
+	}
 	raw, err := hex.DecodeString(hexKey)
 	if err != nil {
-		return nil, fmt.Errorf("hexadecimal de clave pública inválido: %w", err)
+		return nil, fmt.Errorf("clave pública inválida (no hex ni base64url): %w", err)
 	}
 	if len(raw) != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("tamaño de clave pública incorrecto: %d bytes (esperado %d)", len(raw), ed25519.PublicKeySize)

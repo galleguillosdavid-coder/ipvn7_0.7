@@ -30,7 +30,6 @@ const (
 const (
 	BindingAlgoEd25519         = 0x01
 	BindingAlgoExperimentalSig = 0x02
-	BindingAlgoMLDSA65         = BindingAlgoExperimentalSig // alias documental retrocompatible
 )
 
 // Ámbitos de autorización (Scope)
@@ -47,7 +46,8 @@ type BindingRecord struct {
 	Version    uint8     `json:"version"`     // Versión wire (1)
 	RootID     [32]byte  `json:"root_id"`     // Identificador de raíz soberana de 256 bits
 	KeyID      [16]byte  `json:"key_id"`      // Identificador único de clave subordinada
-	Algo       uint8     `json:"algo"`        // 1=Ed25519, 2=ML-DSA-65
+	Algo       uint8     `json:"algo"`        // 1=Ed25519, 2=ExperimentalSig
+
 	Scope      uint8     `json:"scope"`       // Ámbito de autorización
 	PublicKey  []byte    `json:"public_key"`  // Clave pública delegada
 	ValidFrom  time.Time `json:"valid_from"`  // Inicio de vigencia

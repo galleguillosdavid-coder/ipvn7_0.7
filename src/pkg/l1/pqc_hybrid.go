@@ -1,6 +1,7 @@
 // Package l1 implementa la criptografía híbrida Post-Cuántica (PQC)
-// combinando Ed25519/X25519 con ML-DSA (FIPS 204), ML-KEM (FIPS 203) y X-Wing KEM
-// conforme a genesis.md, RFC 10024 y draft-connolly-cfrg-xwing-kem.
+// combinando Ed25519/X25519 con ML-KEM-768 (FIPS 203), híbrido compatible con X-Wing (draft CFRG)
+// y un vector reticular experimental (NO FIPS 204).
+// La autenticidad y no-repudio descansan estrictamente en Ed25519 (RFC 8032).
 package l1
 
 import (
@@ -33,8 +34,6 @@ const (
 	// Longitudes canónicas
 	ExperimentalSigSeedSize = 32
 	ExperimentalSigSize     = 128
-	MLDSA65SeedSize         = ExperimentalSigSeedSize // alias retrocompatible
-	MLDSA65SigSize          = ExperimentalSigSize     // alias retrocompatible
 	MLKEM768CipherSize      = 128
 	SharedSecretSize        = 32
 	XWingPublicKeySize      = 1216 // 1184 (ML-KEM-768) + 32 (X25519)
@@ -62,7 +61,6 @@ type HybridKeyPair struct {
 	Ed25519PubHex           string    `json:"ed25519_pub_hex"`
 	X25519PubHex            string    `json:"x25519_pub_hex"`
 	ExperimentalPQCIdentity string    `json:"experimental_pqc_identity"`
-	MLDSAPubHex             string    `json:"ml_dsa_pub_hex,omitempty"` // alias documental retrocompatible
 	MLKEMPubHex             string    `json:"ml_kem_pub_hex"`
 	CreatedAt               time.Time `json:"created_at"`
 }
@@ -113,7 +111,6 @@ func GenerateHybridKeyPair(did string) (*HybridKeyPair, error) {
 		Ed25519PubHex:           hex.EncodeToString(edPub),
 		X25519PubHex:            hex.EncodeToString(xPub.Bytes()),
 		ExperimentalPQCIdentity: expIDHex,
-		MLDSAPubHex:             expIDHex,
 		MLKEMPubHex:             hex.EncodeToString(mlkemEncaps.Bytes()),
 		CreatedAt:               time.Now().UTC(),
 	}, nil

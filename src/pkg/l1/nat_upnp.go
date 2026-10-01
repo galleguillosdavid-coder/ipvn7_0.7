@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -96,16 +97,77 @@ func (u *UPnPMapper) DiscoverAndForwardWithContext(ctx context.Context, port int
 	}
 }
 
+// isPrivateOrLocalIP valida que la IP pertenezca a redes LAN privadas (RFC 1918) o loopback
+func isPrivateOrLocalIP(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsMulticast() || ip.IsUnspecified() {
+		return false
+	}
+	if ip.IsLoopback() {
+		return true
+	}
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return false
+	}
+	return ip4[0] == 10 ||
+		(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) ||
+		(ip4[0] == 192 && ip4[1] == 168)
+}
+
+// validateLocalURL valida que el esquema sea strictly http y que el host resuelva a una IP privada o loopback
+func validateLocalURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("upnp: url invalida: %w", err)
+	}
+	if u.Scheme != "http" {
+		return fmt.Errorf("upnp: esquema no seguro (requerido http): %s", u.Scheme)
+	}
+	hostname := u.Hostname()
+	if hostname == "" {
+		return fmt.Errorf("upnp: host vacio")
+	}
+	if ip := net.ParseIP(hostname); ip != nil {
+		if !isPrivateOrLocalIP(ip) {
+			return fmt.Errorf("upnp: ip no permitida (anti-SSRF/debe ser LAN): %s", ip.String())
+		}
+		return nil
+	}
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return fmt.Errorf("upnp: resolver host %s: %w", hostname, err)
+	}
+	if len(ips) == 0 {
+		return fmt.Errorf("upnp: host %s no resolvio ninguna IP", hostname)
+	}
+	for _, ip := range ips {
+		if !isPrivateOrLocalIP(ip) {
+			return fmt.Errorf("upnp: host resuelve a ip no autorizada (anti-SSRF): %s", ip.String())
+		}
+	}
+	return nil
+}
+
 func (u *UPnPMapper) addPortMapping(ctx context.Context, location string, port int, desc string) error {
-	if !strings.HasPrefix(location, "http://") {
-		return fmt.Errorf("upnp: ubicacion descriptor invalida: %s", location)
+	if err := validateLocalURL(location); err != nil {
+		return fmt.Errorf("upnp: ubicacion descriptor rechazada: %w", err)
+	}
+
+	safeClient := &http.Client{
+		Timeout: u.timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", location, nil)
 	if err != nil {
 		return err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := safeClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("upnp: descarga descriptor: %w", err)
 	}
@@ -147,6 +209,10 @@ func (u *UPnPMapper) addPortMapping(ctx context.Context, location string, port i
 		return fmt.Errorf("upnp: no se pudo derivar controlURL valida")
 	}
 
+	if err := validateLocalURL(controlURL); err != nil {
+		return fmt.Errorf("upnp: controlURL rechazada: %w", err)
+	}
+
 	localIP, err := getOutboundIP()
 	if err != nil {
 		return fmt.Errorf("upnp: obtener ip lan: %w", err)
@@ -175,7 +241,7 @@ func (u *UPnPMapper) addPortMapping(ctx context.Context, location string, port i
 	soapReq.Header.Set("Content-Type", "text/xml; charset=\"utf-8\"")
 	soapReq.Header.Set("SOAPAction", "\"urn:schemas-upnp-org:service:WANIPConnection:1#AddPortMapping\"")
 
-	soapResp, err := http.DefaultClient.Do(soapReq)
+	soapResp, err := safeClient.Do(soapReq)
 	if err != nil {
 		return fmt.Errorf("upnp: peticion soap fallida: %w", err)
 	}

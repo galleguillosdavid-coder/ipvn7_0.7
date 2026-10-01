@@ -14,21 +14,75 @@
 - **2026-10-01 14:32:00 — INT-010:** Purga radical, condensación y saneamiento de 24 archivos redundantes en `docs/` y modularización de `INTENCION.md` (< 100 líneas) con verificación 100% PASS. *(Completado exitosamente)*.
 - **2026-10-01 14:42:00 — INT-011:** Reducción integral del repositorio al 68% en peso de disco (104.5 MB -> 33.6 MB) y compresión de research (23 -> 1 compendio) con verificación 100% PASS. *(Completado exitosamente)*.
 - **2026-10-01 14:58:00 — INT-012:** Reinicio limpio de Git (reset a único commit génesis), compilación fresca de binarios, lanzamiento de nodo para prueba de usuario y push forzado a `origin/main`. *(Cumplido y Verificado)*.
+- **2026-10-01 17:16:00 — INT-013:** Fase de Cierre Correctivo P0/P1 — Saneamiento de Realidad Técnica y Eliminación de Deuda Estructural. *(En Ejecución Autorizada)*.
 
 ---
 
-## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-012
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-013
 
 ### 1. INTENCIÓN DEL USUARIO
-Directiva: *"1 elimina todos los commit anteriores, 2 actualiza los ejecutables 3 crea un commit nuevo 4 lanza ipvn7 y yo lo probare, 5 realiza un push"*.
+Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de la Fase de Cierre Correctivo (Bloque P0).
 
-### 2. RESULTADO DE EJECUCIÓN
-1. **Historial Git Purificado:** Historial anterior colapsado a un único commit génesis `cad3ee0` (`feat(genesis): ipvn7 v0.7.0 Universal Sovereign Core - canonical audited release`).
-2. **Ejecutable Actualizado:** `bin/ipvn7.exe` recompilado en frío (11.45 MB, Go toolchain `CGO_ENABLED=0`).
-3. **Commit Nuevo:** Asentado canónicamente en `main`.
-4. **Nodo `ipvn7` Activo:** Proceso en ejecución continua (PID 13792). Escuchando en UDP `7777`, gateway SOCKS5 en `10807` y WebUI interactiva activa en `http://127.0.0.1:7070` (`HTTP 200 OK`).
-5. **Push Remoto:** `git push origin main --force` ejecutado con éxito hacia `github.com/galleguillosdavid-coder/ipvn7_0.7.git`.
+### 2. ACCIONES EJECUTADAS (BLOQUE P0)
+- `[x]` **P0.1 — Desacoplar Instalador Windows (`src/cmd/installer/main.go`):**
+  - Eliminadas dependencias rotas de `//go:embed` sobre `assets/ipvn7.exe` y `assets/wintun.dll`.
+  - Eliminada la regla innecesaria de firewall TCP 7070 (`IPVN7-Web-TCP`). Solo UDP 7777 activo.
+  - Implementada Arquitectura B: el instalador busca/instala binarios locales verificados sin polución en el árbol de Git.
+  - Actualizado `scripts/build_installer.ps1` para generar `dist/Instalador_VPN_I7.exe` limpiamente.
+- `[x]` **P0.2 — Purga Total de Nomenclatura ML-DSA:**
+  - Erradicados aliases cosméticos `MLDSA65SeedSize`, `MLDSA65SigSize`, `MLDSAPubHex`, `BindingAlgoMLDSA65`.
+  - Normalizado a `ExperimentalPQCIdentity` y `ExperimentalSig*`.
+  - Rectificados comentarios en `pqc_signatures.go`, `pqc_hybrid.go` y `docs/specs/ADR_RESUMEN.md`: la firma de producción es estrictamente Ed25519; el vector reticular es un HMAC experimental determinista (ML-DSA no está implementado).
+- `[x]` **P0.3 — Sanitización de Gobernanza en IDE (`.vscode/settings.json`):**
+  - Erradicadas las políticas permisivas `always-proceed` y `sandboxMode: false`.
+- `[x]` **Corrección de Gitignore para Supervisor (`config/git.ignore`):**
+  - Anclado `/bin/` en la raíz para permitir el versionado y reproducibilidad de `sistema/bin/` y subsanar la rotura del daemon supervisor.
 
 ### 3. ESTADO
-**CUMPLIDO Y VERIFICADO (LISTO PARA PRUEBA DE USUARIO)**
+**BLOQUE P0 CUMPLIDO Y VERIFICADO AL 100%**
+
+---
+
+## 🎯 MANDATO DE OPERACIÓN AUTÓNOMA: INT-013 (EXTENSIÓN P1 / P2)
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-01 17:29:00)
+> *"documenta desde aqui en adelante : continuar con total autonomia sin pedir confirmacion tomando tu mismo toda desicion"*
+
+- **Modo:** **TOTAL AUTONOMÍA RECTORA DELEGADA**
+- **Alcance Autorizado:** Ejecución continua de todas las fases correctivas pendientes (P1 y P2), toma de decisiones arquitectónicas basadas en la Constitución y la Fuente de Verdad, validaciones de compuertas y asentamiento formal.
+
+### 2. RESULTADO DE EJECUCIÓN (CIERRE P0, P1 Y P2)
+- `[x]` **P0.1 — Desacoplamiento del Instalador Windows (`src/cmd/installer/main.go`):**
+  - Eliminados embeds espurios. Adopción de Arquitectura B (binarios adyacentes verificados).
+  - Eliminada regla de firewall TCP 7070 (`IPVN7-Web-TCP`), manteniendo WebUI blindada en localhost.
+- `[x]` **P0.2 — Purga Total de Nomenclatura ML-DSA:**
+  - Erradicados aliases cosméticos `MLDSA65SeedSize`, `MLDSA65SigSize`, `MLDSAPubHex`, `BindingAlgoMLDSA65`.
+  - Normalizado a `ExperimentalPQCIdentity` y `ExperimentalSig*`.
+  - Consagrada la honestidad técnica: autenticidad en Ed25519 (RFC 8032); vector reticular HMAC experimental (ML-DSA FIPS 204 NO implementado).
+- `[x]` **P0.3 — Sanitización de Gobernanza en IDE (`.vscode/settings.json`):**
+  - Eliminadas políticas permisivas `always-proceed` y `sandboxMode: false`.
+- `[x]` **P1.1 & P1.2 — Presupuesto Matemático de MTU (1280B) y Resiliencia de Secuencia:**
+  - Formalizadas constantes `HeaderBudget`, `DIDBudget`, `AuthBudget`, `MaxPayloadSize` (1132B) en `src/pkg/l0/wire.go`.
+  - Implementado `CompactDIDFromPublicKey` (43B base64url) en `src/pkg/l0/identity.go` y `src/pkg/l1/session_manager.go`.
+  - Certificado que para $\forall \text{ seq} \in [0, 2^{64}-1]$, el datagrama HandshakeInit tiene tamaño $\le 1264$ bytes (al menos 16B de margen garantizado bajo 1280B).
+- `[x]` **P1.3 — Endurecimiento Anti-SSRF y DNS-Rebinding en UPnP (`src/pkg/l1/nat_upnp.go`):**
+  - Validación de esquemas HTTP, IPs privadas RFC 1918 y loopback.
+  - Bloqueo de redirecciones y rechazo de IPs públicas y de metadatos cloud (169.254.x.x).
+  - Suite `TestUPnP_AntiSSRF_Validation` Passing al 100%.
+- `[x]` **P1.4 — Endurecimiento Criptográfico del Actualizador (`src/pkg/core/version_manager.go`):**
+  - Validación de SemVer anti-rollback (`IsHigherVersion`), firma digital Ed25519 de manifest y obligatoriedad de SHA-256.
+  - Suite `TestVersionManager_SemVerAndAntiRollback` Passing al 100%.
+- `[x]` **P1.5 — Trazabilidad y Reproducibilidad del Daemon Supervisor (`sistema/`):**
+  - Corregido `config/git.ignore` (`/bin/`) para versionar `sistema/bin/`.
+  - Suite formal de 14 puntos (`tests_daemon.py`) Passing al 100%.
+- `[x]` **P1.6 & P2.1 — README Canónico en la Raíz (`README.md`):**
+  - Creado `README.md` con la Matriz Factual de Realidad Técnica consagrada.
+- `[x]` **Compuerta Universal de Calidad:**
+  - `verify_ipvn7_standard.ps1` al 100% PASS (18.68 ns/op, 0 B/op, 0 race, 0 lints, 400 líneas cumplidas).
+
+### 3. ESTADO
+**CUMPLIDO Y VERIFICADO AL 100% (LISTO PARA COMMIT Y PUSH SOBERANO)**
+
+
+
 

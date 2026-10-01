@@ -4,7 +4,6 @@ import (
 	"crypto/ecdh"
 	"crypto/mlkem"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -110,8 +109,8 @@ func (m *PQCSessionManager) CreateHandshakeInitPacket(targetDID string, targetX2
 	m.mu.Unlock()
 
 	seq := m.seqCounter.Add(1)
-	// Emplear clave pública compacta de 64 caracteres hex y timestamp UNIX en segundos para respetar MTU de 1280B
-	compactSourceDID := hex.EncodeToString(m.identity.PublicKey)
+	// Emplear clave pública compacta base64url (43 bytes) y timestamp UNIX en segundos para garantizar presupuesto MTU <= 1280B
+	compactSourceDID := l0.CompactDIDFromPublicKey(m.identity.PublicKey)
 	pkt := l0.NewPacket(l0.MsgTypeHandshakeInit, compactSourceDID, "", seq, nil, rawKEM)
 	pkt.Timestamp = time.Now().Unix()
 	if err := pkt.SignPacket(m.identity); err != nil {

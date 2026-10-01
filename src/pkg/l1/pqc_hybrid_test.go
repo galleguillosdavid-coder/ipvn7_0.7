@@ -15,7 +15,7 @@ func TestHybridPQCKeygenSignAndVerify(t *testing.T) {
 		t.Fatalf("GenerateHybridKeyPair failed: %v", err)
 	}
 
-	if kp.Ed25519PubHex == "" || kp.X25519PubHex == "" || kp.MLDSAPubHex == "" || kp.MLKEMPubHex == "" {
+	if kp.Ed25519PubHex == "" || kp.X25519PubHex == "" || kp.ExperimentalPQCIdentity == "" || kp.MLKEMPubHex == "" {
 		t.Fatalf("Claves públicas incompletas en HybridKeyPair: %+v", kp)
 	}
 

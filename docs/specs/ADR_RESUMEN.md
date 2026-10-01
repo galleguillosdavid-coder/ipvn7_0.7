@@ -75,10 +75,11 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - Anti-DPI corporativo
 - ❌ Prohibido: TLS sin camuflaje
 
-**DEC-104:** Firmas PQC Compuestas  
-- Ed25519 + ML-DSA FIPS 204
-- Identidad soberana post-cuántica
-- ❌ Prohibido: Algoritmos clásicos solos
+**DEC-104:** Firmas Compuestas (Ed25519 + Vector Experimental)  
+- Ed25519 (RFC 8032 canónico) + Vector Reticular Experimental (ML-DSA no implementado en v0.7.0)
+- Identidad soberana de transición post-cuántica
+- ❌ Prohibido: Afirmar cumplimiento FIPS 204 sin implementación formal
+
 
 ### Red y Rendimiento
 **DEC-085:** SSDP/UPnP Estable  

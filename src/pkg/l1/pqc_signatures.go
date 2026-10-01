@@ -1,8 +1,8 @@
-// Package l1 implementa la firma híbrida dual Ed25519 (estándar RFC 8032) + vector experimental ML-DSA.
-// ESTADO TAXONÓMICO: DEMOSTRADO FÍSICAMENTE (Ed25519 estándar de producción) / EXPERIMENTAL (Vector reticular).
+// Package l1 implementa la firma híbrida dual Ed25519 (estándar RFC 8032) + vector experimental determinista.
+// ESTADO TAXONÓMICO: DEMOSTRADO FÍSICAMENTE (Ed25519 estándar de producción) / EXPERIMENTAL (Vector reticular HMAC).
 // NOTA TÉCNICA OBLIGATORIA (Auditoría Externa): El componente reticular adjunto es un compromiso
-// determinista derivado por semilla; NO constituye una implementación formal completa de NIST FIPS 204
-// (Module-Lattice-Based Digital Signature Standard). La garantía de no-repudio y autenticidad
+// determinista derivado por semilla; NO constituye una implementación formal de NIST FIPS 204.
+// ML-DSA NO ESTÁ IMPLEMENTADO en IPVN7 v0.7.0. La garantía de no-repudio y autenticidad
 // en producción descansa estrictamente en Ed25519.
 package l1
 
@@ -14,15 +14,15 @@ import (
 	"time"
 )
 
-// HybridSignature representa una firma dual clásica + reticular
+// HybridSignature representa una firma dual clásica + reticular experimental
 type HybridSignature struct {
 	Algorithm    string `json:"algorithm"`
 	ClassicalSig []byte `json:"classical_sig"` // 64 bytes (Ed25519)
-	PQCSig       []byte `json:"pqc_sig"`       // Vector reticular ML-DSA
+	PQCSig       []byte `json:"pqc_sig"`       // Vector reticular experimental
 	Timestamp    int64  `json:"timestamp"`
 }
 
-// Sign genera una firma híbrida dual inescindible: Ed25519 + ML-DSA
+// Sign genera una firma híbrida dual: Ed25519 (producción) + Vector Experimental
 func (kp *HybridKeyPair) Sign(message []byte) (*HybridSignature, error) {
 	kp.mu.RLock()
 	defer kp.mu.RUnlock()
@@ -63,7 +63,7 @@ func (kp *HybridKeyPair) Sign(message []byte) (*HybridSignature, error) {
 	}, nil
 }
 
-// Verify valida exhaustivamente que AMBAS firmas (Ed25519 y ML-DSA) sean matemáticamente correctas
+// Verify valida exhaustivamente que la firma Ed25519 y el vector reticular experimental sean correctos
 func (kp *HybridKeyPair) Verify(message []byte, sig *HybridSignature) bool {
 	kp.mu.RLock()
 	defer kp.mu.RUnlock()

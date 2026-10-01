@@ -246,3 +246,62 @@ func TestPQCDatapath_PhysicalUDP_ZTNA_AntiReplay(t *testing.T) {
 		t.Fatalf("ZTNA debió BLOQUEAR por Default-Deny al atacante no autenticado C!")
 	}
 }
+
+func TestPQCSessionManager_MTUSequenceBudget(t *testing.T) {
+	idAlice, err := l0.GenerateIdentity()
+	if err != nil {
+		t.Fatalf("Error id: %v", err)
+	}
+	idBob, err := l0.GenerateIdentity()
+	if err != nil {
+		t.Fatalf("Error id Bob: %v", err)
+	}
+	keysAlice, err := l1.GenerateHybridKeyPair(idAlice.DID())
+	if err != nil {
+		t.Fatalf("Error keys: %v", err)
+	}
+	keysBob, err := l1.GenerateHybridKeyPair(idBob.DID())
+	if err != nil {
+		t.Fatalf("Error keys Bob: %v", err)
+	}
+
+	mgrAlice := l1.NewPQCSessionManager(idAlice, keysAlice, nil)
+
+	testSeqs := []uint64{
+		0,
+		1,
+		23,
+		24,
+		255,
+		256,
+		65535,
+		65536,
+		4294967295,
+		4294967296,
+		^uint64(0), // MaxUint64
+	}
+
+	for _, seq := range testSeqs {
+		pkt, err := mgrAlice.CreateHandshakeInitPacket(idBob.DID(), keysBob.ClassicalKEMPub, keysBob.MLKEMPubHex)
+		if err != nil {
+			t.Fatalf("CreateHandshakeInitPacket failed for seq=%d: %v", seq, err)
+		}
+		pkt.Sequence = seq
+		// Re-firmar con el nuevo valor de Sequence
+		if err := pkt.SignPacket(idAlice); err != nil {
+			t.Fatalf("SignPacket failed for seq=%d: %v", seq, err)
+		}
+
+		encoded, err := pkt.Encode()
+		if err != nil {
+			t.Fatalf("ERROR MTU: Paquete HandshakeInit con seq=%d excede MTU o falla Encode: %v", seq, err)
+		}
+
+		if len(encoded) > l0.MaxPacketSize {
+			t.Fatalf("VIOLACIÓN MTU: HandshakeInit con seq=%d tiene tamaño %d > %d", seq, len(encoded), l0.MaxPacketSize)
+		}
+		t.Logf("seq=%-20d -> Encoded size: %d / %d bytes (Margen libre: %d bytes)",
+			seq, len(encoded), l0.MaxPacketSize, l0.MaxPacketSize-len(encoded))
+	}
+}
+

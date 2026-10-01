@@ -1,6 +1,7 @@
 # Binaries & Builds
-bin/
+/bin/
 dist/
+
 !dist/version_manifest.json
 *.zip
 !bin/windows_amd64/

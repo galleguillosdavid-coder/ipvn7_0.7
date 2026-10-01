@@ -4,6 +4,7 @@
 package core
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -39,6 +40,7 @@ type UpdateManifest struct {
 	WireVersion  byte                       `json:"wire_version"`
 	ReleaseNotes string                     `json:"release_notes"`
 	Platforms    map[string]PlatformRelease `json:"platforms"`
+	Signature    string                     `json:"signature,omitempty"` // Firma Ed25519 de release
 }
 
 // UpdateCheckResult representa el dictamen de verificación de versión en línea
@@ -117,6 +119,55 @@ func VerifyFileSHA256(filePath, expectedHex string) error {
 	return nil
 }
 
+// ParseSemVer extrae los componentes mayor, menor y parche de versiones tipo "v0.7.0" o "v0.7.9-future"
+func ParseSemVer(v string) (major, minor, patch int, err error) {
+	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+	if idx := strings.Index(v, "-"); idx != -1 {
+		v = v[:idx]
+	}
+	parts := strings.Split(v, ".")
+	if len(parts) < 3 {
+		return 0, 0, 0, fmt.Errorf("formato semver invalido: %s", v)
+	}
+	_, err = fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &patch)
+	return
+}
+
+// IsHigherVersion valida estrictamente que la versión candidata sea numéricamente superior (anti-rollback)
+func IsHigherVersion(current, candidate string) bool {
+	cMaj, cMin, cPat, err1 := ParseSemVer(current)
+	tMaj, tMin, tPat, err2 := ParseSemVer(candidate)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	if tMaj > cMaj {
+		return true
+	}
+	if tMaj == cMaj && tMin > cMin {
+		return true
+	}
+	if tMaj == cMaj && tMin == cMin && tPat > cPat {
+		return true
+	}
+	return false
+}
+
+// VerifyManifestSignature comprueba la firma digital Ed25519 del manifiesto
+func VerifyManifestSignature(m *UpdateManifest, pubKey ed25519.PublicKey) (bool, error) {
+	if m == nil || m.Signature == "" {
+		return false, errors.New("el manifiesto no contiene firma digital")
+	}
+	sigBytes, err := hex.DecodeString(m.Signature)
+	if err != nil || len(sigBytes) != ed25519.SignatureSize {
+		return false, fmt.Errorf("firma digital malformada en manifiesto")
+	}
+	payload := fmt.Sprintf("%s|%s|%d", m.Version, m.BuildVersion, m.WireVersion)
+	if !ed25519.Verify(pubKey, []byte(payload), sigBytes) {
+		return false, errors.New("firma digital Ed25519 del manifiesto no coincide")
+	}
+	return true, nil
+}
+
 // CheckOnlineUpdate consulta el faro de versiones y evalúa si existe una versión superior
 func (vm *VersionManager) CheckOnlineUpdate(manifestURL string) (*UpdateCheckResult, error) {
 	if manifestURL == "" {
@@ -144,7 +195,7 @@ func (vm *VersionManager) CheckOnlineUpdate(manifestURL string) (*UpdateCheckRes
 
 	platformKey := runtime.GOOS + "/" + runtime.GOARCH
 	rel, hasPlatform := m.Platforms[platformKey]
-	isNewer := m.Version != "" && m.Version != CurrentVersion
+	isNewer := IsHigherVersion(CurrentVersion, m.Version)
 
 	res := &UpdateCheckResult{
 		Available:      isNewer && hasPlatform,
@@ -154,6 +205,11 @@ func (vm *VersionManager) CheckOnlineUpdate(manifestURL string) (*UpdateCheckRes
 		Platform:       platformKey,
 	}
 	if hasPlatform {
+		if !strings.HasPrefix(rel.URL, "https://") &&
+			!strings.HasPrefix(rel.URL, "http://127.0.0.1:") &&
+			!strings.HasPrefix(rel.URL, "http://localhost:") {
+			return nil, errors.New("url de descarga no autorizada: debe ser HTTPS oficial o localhost de pruebas")
+		}
 		res.DownloadURL = rel.URL
 		res.ExpectedSHA256 = rel.SHA256
 	}
@@ -202,10 +258,11 @@ func (vm *VersionManager) PrepareAtomicUpdate(newBinaryPath string, expectedSHA2
 	defer vm.mu.Unlock()
 
 	// 1. Verificación criptográfica obligatoria (Rol M: prohibido instalar sin hash válido)
-	if expectedSHA256 != "" {
-		if err := VerifyFileSHA256(newBinaryPath, expectedSHA256); err != nil {
-			return fmt.Errorf("verificación criptográfica fallida: %w", err)
-		}
+	if strings.TrimSpace(expectedSHA256) == "" {
+		return errors.New("verificación criptográfica fallida: hash SHA256 esperado es obligatorio y no puede estar vacío")
+	}
+	if err := VerifyFileSHA256(newBinaryPath, expectedSHA256); err != nil {
+		return fmt.Errorf("verificación criptográfica fallida: %w", err)
 	}
 
 	// 2. Limpieza de backups previos

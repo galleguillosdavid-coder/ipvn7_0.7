@@ -12,11 +12,15 @@ import (
 )
 
 
-// Constantes del formato wire de ipvn7
+// Constantes del formato wire y presupuesto determinista de MTU (RFC 8200)
 const (
 	MagicBytes uint32 = 0x49505637 // "IPV7"
 	WireVersion uint8  = 0x01
 	MaxPacketSize      = 1280 // Deterministic MTU
+	HeaderBudget       = 32   // Magic, Version, Type, Timestamp, Sequence, Map framing
+	DIDBudget          = 48   // Compact SourceDID (43B base64url + framing)
+	AuthBudget         = 68   // Ed25519 Signature (64B + framing)
+	MaxPayloadSize     = MaxPacketSize - HeaderBudget - DIDBudget - AuthBudget // 1132 bytes
 )
 
 // Tipos de mensaje del protocolo

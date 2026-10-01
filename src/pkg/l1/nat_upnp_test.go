@@ -71,3 +71,30 @@ func TestUPnPMapper_MockGateway(t *testing.T) {
 		t.Fatal("el servidor mock no recibio la peticion SOAP AddPortMapping")
 	}
 }
+
+func TestUPnP_AntiSSRF_Validation(t *testing.T) {
+	mapper := NewUPnPMapper(1 * time.Second)
+	ctx := context.Background()
+
+	hostileTargets := []struct {
+		name string
+		url  string
+	}{
+		{"PublicWAN", "http://8.8.8.8/desc.xml"},
+		{"CloudMetadata", "http://169.254.169.254/latest/meta-data/"},
+		{"NonHTTP_FTP", "ftp://192.168.1.1/desc.xml"},
+		{"NonHTTP_HTTPS", "https://192.168.1.1/desc.xml"},
+		{"EmptyHost", "http:///desc.xml"},
+	}
+
+	for _, tt := range hostileTargets {
+		t.Run(tt.name, func(t *testing.T) {
+			err := mapper.addPortMapping(ctx, tt.url, 7777, "test")
+			if err == nil {
+				t.Fatalf("Vulnerabilidad SSRF: addPortMapping debió RECHAZAR %s", tt.url)
+			}
+			t.Logf("Rechazado correctamente: %v", err)
+		})
+	}
+}
+
