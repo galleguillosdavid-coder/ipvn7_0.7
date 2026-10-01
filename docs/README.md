@@ -15,8 +15,8 @@
 ---
 
 > [!IMPORTANT]
-> ### 🤖 DIRECTIVA DE ASUNCIÓN DE ROL Y AUTODISPARADOR CONTINUO (.agents)
-> Toda entidad (desarrollador, agente de inteligencia artificial o lector) que interactúe con este proyecto **debe asumir inmediatamente el rol del agente maestro de red configurado en [`.agents/`](.agents/)** ([`ipvn7-network-os-agent`](.agents/skills/ipvn7-network-os-agent/SKILL.md) y [`rules/`](.agents/rules/)).
+> ### 🤖 DIRECTIVA DE ASUNCIÓN DE ROL Y AUTODISPARADOR CONTINUO (agentes)
+> Toda entidad (desarrollador, agente de inteligencia artificial o lector) que interactúe con este proyecto **debe asumir inmediatamente el rol del agente maestro de red configurado en [`agentes/`](agentes/)** ([`ipvn7-network-os-agent`](agentes/skills/ipvn7-network-os-agent/SKILL.md) y [`rules/`](agentes/rules/)).
 > **Obligación operativa:** Actuar en estricta conformidad con los estándares de ingeniería pragmática, manteniendo activo el **demonio autónomo de segundo plano** (`scripts/run_autonomous_daemon.ps1`, 0 tokens de API) que ejecuta la Magna Multi-Suite cada 10 minutos.
 
 ---

@@ -135,7 +135,7 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - ❌ Prohibido: Acumular carpetas de código muerto o archivos de descarte en el árbol de trabajo; Git preserva el historial cronológico.
 
 **DEC-113:** Modelo Agéntico Basado en Roles Operativos (7 Sub-Roles)  
-- Estructuración del Agente Maestro (`ipvn7-network-os-agent`) en 7 sub-roles especializados (`.agents/ROLES.md`): Funcionalidades, Simplificación, Custodia Docs/Rutas, Radar Exógeno, Diagnóstico/Logs/Memoria, Compacidad $\le 400$L y Cero Basura.
+- Estructuración del Agente Maestro (`ipvn7-network-os-agent`) en 7 sub-roles especializados (`agentes/ROLES.md`): Funcionalidades, Simplificación, Custodia Docs/Rutas, Radar Exógeno, Diagnóstico/Logs/Memoria, Compacidad $\le 400$L y Cero Basura.
 - Cero tolerancia a parches tramposos en tests o violaciones de invariantes de raíz pura.
 - ❌ Prohibido: Asumir tareas complejas sin invocar al rol de diagnóstico y verificación física correspondiente.
 
@@ -155,27 +155,27 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - ❌ Prohibido: Permitir que archivos nucleares superen 350 líneas sin podar primero el código accesorio redundante.
 
 **DEC-117:** Rol K (Arquitecto de Distribución) y Matriz de Compilación Multiplataforma Universal
-- Formalización del Rol K en `.agents/ROLES.md` y `.agents/AGENTS.md` para empaquetado y distribución en <30 segundos.
+- Formalización del Rol K en `agentes/ROLES.md` y `agentes/AGENTS.md` para empaquetado y distribución en <30 segundos.
 - Matriz universal (`scripts/build_all_platforms.ps1/sh`): generación de 6 binarios estáticos independientes (`windows/amd64`, `windows/arm64`, `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`) con `CGO_ENABLED=0`, cero dependencias dinámicas y sumas SHA256 en `bin/SHA256SUMS.txt`.
 - Sincronización de stubs de plataforma en `src/pkg/core/platform_other.go` y resolución de advertencias de compilación cruzada en macOS (`tun_native_darwin.go`).
 - ❌ Prohibido: Reescribir el sistema en Assembly nativo (antítesis de universalidad); prohibido publicar binarios con dependencias de librerías dinámicas del sistema.
 
 **DEC-118:** Rol L (Embajador de Dispositivos) y Arquitectura de Nodos Guardianes con Shadow DIDs
-- Formalización del Rol L en `.agents/ROLES.md` y `.agents/AGENTS.md` para convertir computadores en Nodos Guardianes (Edge Ambassadors) de la LAN física.
+- Formalización del Rol L en `agentes/ROLES.md` y `agentes/AGENTS.md` para convertir computadores en Nodos Guardianes (Edge Ambassadors) de la LAN física.
 - Derivación determinista de identidades virtuales (`did:ipvn7:shadow:<sha256(MAC)>`) y asignación de IPs soberanas en `10.7.100.0/24`.
 - Reenvío L4 transparente zero-copy con filtrado ZTNA de puertos (impresoras IPP 631 / JetDirect 9100, cámaras RTSP 554, HTTP) e inyección física de Magic Packet Wake-on-LAN.
 - Exposición en la API `/api/v1/status` y en la WebUI para visualización y control en 1 clic.
 - ❌ Prohibido: Exigir modificación de firmware en dispositivos de hardware cerrado; prohibido exponer dispositivos IoT directamente a Internet sin el escudo ZTNA de la malla.
 
 **DEC-119:** Rol M (Centinela de Versiones) y Auto-Actualización Atómica con Rollback
-- Formalización del Rol M en `.agents/ROLES.md` y `.agents/AGENTS.md` para ciclo de vida SemVer y trazabilidad criptográfica.
+- Formalización del Rol M en `agentes/ROLES.md` y `agentes/AGENTS.md` para ciclo de vida SemVer y trazabilidad criptográfica.
 - Implementación de `VersionManager` en `src/pkg/core/version_manager.go` con verificación forzosa de hash SHA256 antes del reemplazo.
 - Reemplazo in-place atómico (`.new -> .old -> .exe`) con capacidad de rollback determinista automático en <5 segundos si el nuevo proceso no supera el health check.
 - Flag nativo de CLI `ipvn7 -version` para inspección instantánea de versión, build y wire protocol.
 - ❌ Prohibido: Instalar o aceptar actualizaciones sin verificación criptográfica; prohibido dejar un nodo sin internet ante una actualización rota.
 
 **DEC-120:** Rol N (Blindaje Binario y Anti-Ingeniería Inversa con Garble y Stripping DWARF)
-- Formalización del Rol N en `.agents/ROLES.md` y `.agents/AGENTS.md` para protección de ejecutables contra ingeniería inversa y extracción estática de cadenas/lógica.
+- Formalización del Rol N en `agentes/ROLES.md` y `agentes/AGENTS.md` para protección de ejecutables contra ingeniería inversa y extracción estática de cadenas/lógica.
 - Integración de pipeline de compilación blindada (`scripts/build_hardened.ps1`): soporte de `garble` con ofuscación de AST (`-tiny`, `-seed=random`) y cifrado estático de literales (`-literals`).
 - Invariantes de stripping estricto: erradicación de rutas locales (`-trimpath`), remoción de tabla de símbolos (`-ldflags="-s"`) y depuración DWARF (`-ldflags="-w"`).
 - Fallback determinista a build nativo Go con stripping completo si `garble` no está instalado en el host, garantizando cero fallos de CI/CD.
@@ -192,7 +192,7 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - ❌ Prohibido: Dejar proxies del sistema huérfanos al cerrar o matar la aplicación; prohibido bloquear el tráfico de aplicaciones de mensajería crítica como WhatsApp.
 
 **DEC-122:** Rol O (Radar de Innovación en IA y Ecosistemas Agénticos) y Transporte Soberano para Agentes
-- Formalización del Rol O en `.agents/ROLES.md` y `.agents/AGENTS.md` para vigilancia de IA de frontera (MCP, A2A v1.0, Edge LLMs, inferencia P2P).
+- Formalización del Rol O en `agentes/ROLES.md` y `agentes/AGENTS.md` para vigilancia de IA de frontera (MCP, A2A v1.0, Edge LLMs, inferencia P2P).
 - Posicionamiento de IPvN7 como la infraestructura de red soberana, P2P y post-cuántica (PQC Kyber/ML-KEM) para la comunicación segura entre agentes sin depender de servidores centrales.
 - Filtro anti-gordura: prohibido incorporar librerías pesadas de ML al núcleo Go. La integración de IA se realiza exclusivamente mediante protocolos ligeros estándar (JSON-RPC, SSE, OpenAPI), inferencia desacoplada (Ollama/llama.cpp en la malla) o heurísticas deterministas embebidas.
 - ❌ Prohibido: Inflar el binario con runtimes de Python/PyTorch; prohibido incorporar conceptos de IA teóricos que no generen tracción, usabilidad o velocidad medible en IPvN7.
@@ -245,7 +245,7 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - ❌ Prohibido: Depender de servidores proxy centrales; prohibido dejar al usuario sin internet si el gateway remoto falla; prohibido violar el límite de 400 líneas.
 
 **DEC-131:** Rol R (Orquestador HIL de Laboratorio Bi-Nodo y Pruebas Físicas) y Expansión del Consejo Agéntico a 18 Sub-Roles
-- Formalización del Rol R en `.agents/ROLES.md` y `.agents/AGENTS.md` para automatizar la verificación física obligatoria en el laboratorio de 2 nodos (Nodo A PC Principal `192.168.1.198` $\leftrightarrow$ Nodo B Notebook `192.168.1.106:2201`), despliegue por SFTP/SSH, aserción cruzada de tráfico y simulación de fallas HIL (Reglas 2 y 5).
+- Formalización del Rol R en `agentes/ROLES.md` y `agentes/AGENTS.md` para automatizar la verificación física obligatoria en el laboratorio de 2 nodos (Nodo A PC Principal `192.168.1.198` $\leftrightarrow$ Nodo B Notebook `192.168.1.106:2201`), despliegue por SFTP/SSH, aserción cruzada de tráfico y simulación de fallas HIL (Reglas 2 y 5).
 - Incorporación de directiva de "Economía de Compilación de Release" en Rol P, limitando la generación pesada de `Instalador_VPN_I7.exe` a hitos de release mayor o petición expresa del usuario para optimizar tiempo y consumo de tokens.
 - Actualización de directivas en Rol Q para coordinar la agregación multipath (Channel Bonding) junto al Rol R.
 - ❌ Prohibido: Dar por finalizada una tarea de red o peering sin aserción cruzada física en ambos nodos del laboratorio; prohibido gastar tokens regenerando instaladores completos ante cambios menores de código.
@@ -277,7 +277,7 @@ Las decisiones históricas DEC-001 a DEC-078 residen archivadas en el historial 
 - ❌ Prohibido: Descargar o ejecutar binarios sin validación previa de hash SHA-256; prohibido auto-actualizar de forma destructiva sin backup criptográfico (.bak) para rollback.
 
 **DEC-136:** Rol U (Evangelizador & Maestro Interactivo de Adopción Soberana) y Sistema de Aprendizaje Progresivo (`guide/`)
-- Creación y formalización del Sub-Rol U en `.agents/ROLES.md`, `.agents/AGENTS.md` y `.agents/skills/ipvn7-evangelist-interactive-agent/SKILL.md`.
+- Creación y formalización del Sub-Rol U en `agentes/ROLES.md`, `agentes/AGENTS.md` y `agentes/skills/ipvn7-evangelist-interactive-agent/SKILL.md`.
 - Implementación de la suite interactiva de adopción en `guide/` con 5 capas de revelación cognitiva (metáfora de autopista propia, casos de uso en vida/dispositivos/trabajo/comunidad, simulador cuántico y de corte de red Kleinberg, comparativa factual y onboarding 1-clic).
 - Autocontención 100% offline con Vanilla HTML5/CSS/JS, estética biomórfica cyberpunk glassmorphism a 60 FPS, servible por el nodo en `/guide`.
 - ❌ Prohibido: Presentar al usuario conceptos crípticos sin metáforas cotidianas; prohibido depender de CDNs externas para la guía interactiva; prohibido violar el límite de 400 líneas.

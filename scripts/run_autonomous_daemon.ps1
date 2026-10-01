@@ -15,12 +15,12 @@ $intervalSeconds = $IntervalHours * 3600
 
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "  AUTODISPARADOR PERMANENTE IPVN7 - CADENCIA CADA $IntervalHours HORAS ($intervalSeconds S)" -ForegroundColor Cyan
-Write-Host "  Modo: Daemon Autonomo con Exclusion Mutua (.agents/task.lock)" -ForegroundColor Cyan
+Write-Host "  Modo: Daemon Autonomo con Exclusion Mutua (agentes/task.lock)" -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
 while ($true) {
     $now = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-    $lockFile = "$RepoRoot\.agents\task.lock"
+    $lockFile = "$RepoRoot\agentes\task.lock"
 
     $isLocked = $false
     if (Test-Path $lockFile) {

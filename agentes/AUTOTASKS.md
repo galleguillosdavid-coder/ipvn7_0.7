@@ -1,4 +1,4 @@
-# COLA DE AUTOTAREAS DE AUDITORÍA EXTERNA IPVN7 (.agents)
+# COLA DE AUTOTAREAS DE AUDITORÍA EXTERNA IPVN7 (agentes)
 
 Este documento registra la planificación y el estado factual de ejecución continua del Agente de Red Soberano (`ipvn7-network-os-agent`), organizado estrictamente bajo el **Plan Canónico de 13 Fases de la Auditoría Externa** (`docs/auditoria externa.md`).
 

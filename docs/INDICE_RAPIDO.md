@@ -28,13 +28,13 @@ Guía rápida de navegación para desarrolladores, usuarios y agentes de IA. Tod
 
 ---
 
-## 🤖 Directivas de Inteligencia y Roles (.agents)
+## 🤖 Directivas de Inteligencia y Roles (agentes)
 
 | Documento | Enfoque |
 |---|---|
-| [`.agents/AGENTS.md`](../.agents/AGENTS.md) | Carta Magna, Objetivo Supremo, Algoritmo de 5 Pasos y reglas de oro. |
-| [`.agents/ROLES.md`](../.agents/ROLES.md) | Modelo Agéntico de 15 Sub-Roles Operativos (DEC-114 a DEC-122). |
-| [`.agents/skills/ipvn7-network-os-agent/SKILL.md`](../.agents/skills/ipvn7-network-os-agent/SKILL.md) | Instrucciones ejecutables del agente maestro soberano. |
+| [`agentes/AGENTS.md`](../agentes/AGENTS.md) | Carta Magna, Objetivo Supremo, Algoritmo de 5 Pasos y reglas de oro. |
+| [`agentes/ROLES.md`](../agentes/ROLES.md) | Modelo Agéntico de 15 Sub-Roles Operativos (DEC-114 a DEC-122). |
+| [`agentes/skills/ipvn7-network-os-agent/SKILL.md`](../agentes/skills/ipvn7-network-os-agent/SKILL.md) | Instrucciones ejecutables del agente maestro soberano. |
 
 ---
 

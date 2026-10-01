@@ -7,7 +7,7 @@ config/firebase_credentials.json
 data/*.log
 data/*.db
 data/ipvn7.log
-.agents/task.lock
+agentes/task.lock
 
 # Binarios de Salida
 bin/ipvn7.exe
@@ -24,6 +24,4 @@ dist/*.zip
 ~*
 .DS_Store
 Thumbs.db
-ag/
-vsc/
 

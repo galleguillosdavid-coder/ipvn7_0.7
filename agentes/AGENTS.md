@@ -119,4 +119,4 @@ ARQUITECTO ──► PLAN ──► PROGRAMADOR ──► TESTER ──► SEGUR
    - **Nodo B (Notebook Dvd):** `192.168.1.106`
    - Prohibido auto-emparejamiento y nodos fantasma.
 5. **Compuerta de Paso Universal:** Ninguna modificación es válida sin ejecución limpia de `scripts/verify_ipvn7_standard.ps1` (0 violaciones de 400L, `go vet` limpio, `go test ./pkg/...` 100% PASS).
-6. **Cerrojo Atómico (.agents/task.lock):** Exclusión mutua obligatoria contra colisiones.
+6. **Cerrojo Atómico (agentes/task.lock):** Exclusión mutua obligatoria contra colisiones.

@@ -8,7 +8,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-$lockFile = Join-Path $RepoRoot ".agents\task.lock"
+$lockFile = Join-Path $RepoRoot "agentes\task.lock"
 
 # 0. Verificacion de Tarea en Curso (Evitar Solapamientos)
 if (Test-Path $lockFile) {

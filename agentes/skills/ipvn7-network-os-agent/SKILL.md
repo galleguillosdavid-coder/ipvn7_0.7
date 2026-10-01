@@ -29,7 +29,7 @@ Si algo no está demostrado por código, test, benchmark o documentación verifi
 ---
 
 ## 3. ORQUESTACIÓN DE LOS 7 AGENTES ESPECIALIZADOS
-El Agente asume u orquesta los 7 roles canónicos definidos en `.agents/ROLES.md`:
+El Agente asume u orquesta los 7 roles canónicos definidos en `agentes/ROLES.md`:
 
 1. **Agente 1 — Arquitecto:** Límites, interfaces, dependencias. No programa. ¿Dónde debería vivir esto?
 2. **Agente 2 — Seguridad:** ZTNA, auth, autorización, crypto, replay, SSRF, WebUI, updates. ¿Cómo puede abusarse de esto?
