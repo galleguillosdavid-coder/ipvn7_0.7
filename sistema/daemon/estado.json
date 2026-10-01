@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "modo": "SAFE",
+  "pid": null,
+  "ciclo_actual": 1,
+  "ultimo_inicio": "2026-10-01 11:13:41",
+  "ultimo_fin": "2026-10-01 11:13:41",
+  "ultimo_objetivo": "OBJ-042",
+  "estado_ultimo_objetivo": "FALLIDO",
+  "fallos_consecutivos": 0,
+  "intervalo_actual_segundos": 600,
+  "motivo_parada": "Ruta fuera de scope en transacción: sistema/AUTONOMIA.json",
+  "proximo_ciclo": null
+}

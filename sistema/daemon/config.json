@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "modo_inicial": "RUN",
+  "intervalo_segundos": 1800,
+  "intervalo_min_segundos": 60,
+  "intervalo_max_segundos": 3600,
+  "backoff_multiplicador": 2.0,
+  "max_fallos_consecutivos": 5,
+  "max_objetivos_por_ciclo": 3,
+  "max_tiempo_ciclo_segundos": 300,
+  "archivos_protegidos": [
+    "src/",
+    "sistema/CONSTITUCION.md",
+    "sistema/AUTONOMIA.json"
+  ]
+}

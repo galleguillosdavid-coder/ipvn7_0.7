@@ -1,0 +1,33 @@
+{
+  "version": "v0.7.0",
+  "build_version": "v0.7.0",
+  "wire_version": 7,
+  "release_notes": "IPvN7 Sovereign Network OS v0.7.0 - Ritmo Cardíaco Vital, PQC Híbrido ML-KEM-768 y 100% Health Score",
+  "published_at": "2026-09-30T14:45:00Z",
+  "platforms": {
+    "windows/amd64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-windows-amd64.exe",
+      "sha256": "C8AE58D2BA626A8EA515DDED1323FD3C60DE9C520D4DE3AB0168A38494AC9A72"
+    },
+    "windows/arm64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-windows-arm64.exe",
+      "sha256": "F8BFCD2B437B3374EC18D56B5A0AE352B66D8F176A36A6FD32892104407BDD80"
+    },
+    "linux/amd64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-linux-amd64",
+      "sha256": "055CAF359BEE36E4B4FEF93BFAF1B90BCF9201CF0754F055C3E890537D113578"
+    },
+    "linux/arm64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-linux-arm64",
+      "sha256": "E5699B87513A8DAFCA46CFA53584BC1848B680ABC3395A842914A51782588A5F"
+    },
+    "darwin/amd64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-darwin-amd64",
+      "sha256": "5C8F56B46EB70D368E4DB80280961E8CAA2D50368EC66B4BC578DCEFCA3F95FE"
+    },
+    "darwin/arm64": {
+      "url": "https://github.com/galleguillosdavid-coder/ipvn7_0.7/releases/download/v0.7.0/ipvn7-darwin-arm64",
+      "sha256": "F018D9DA882B1F749CF15349F838E286B01EAD241B241EA28009E28ADF458FBA"
+    }
+  }
+}

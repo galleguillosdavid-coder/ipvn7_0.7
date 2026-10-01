@@ -1,0 +1,61 @@
+name: ipvn7 Continuous Integration & Security Gate
+
+on:
+  push:
+    branches: [ main, 'audit/**', 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-verify:
+    name: Unit, Race, Security & Benchmark Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Setup Go Toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'src/go.mod'
+          check-latest: true
+          cache: true
+          cache-dependency-path: src/go.sum
+
+      - name: Static Analysis (go vet)
+        run: |
+          cd src
+          go vet ./...
+
+      - name: Unit Tests (go test ./...)
+        run: |
+          cd src
+          go test -v ./...
+
+      - name: Concurrency & Race Detector (go test -race)
+        run: |
+          cd src
+          go test -race -cpu=4 ./pkg/core ./pkg/l1 ./pkg/l2
+
+      - name: Adversarial Security Suite (Tests A - H & DID Spoofing)
+        run: |
+          cd src
+          go test -v -run "TestAdversarial|TestHandshake_DIDSpoofing" ./pkg/l1
+
+      - name: Real Datapath Benchmark (BenchmarkDatapathEndToEnd)
+        run: |
+          cd src
+          go test -run=^$ -bench=BenchmarkDatapathEndToEnd -benchmem ./pkg/l1
+
+      - name: Zero-Copy Pipeline Orchestration Benchmark
+        run: |
+          cd src
+          go test -run=^$ -bench=BenchmarkLinearPipeline_Execute -benchmem ./pkg/core
+
+      - name: Build Core Binary (Smoke Verification)
+        env:
+          CGO_ENABLED: 0
+        run: |
+          cd src
+          go build -trimpath -o ../bin/ipvn7 ./cmd/ipvn7

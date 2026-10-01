@@ -1,0 +1,14 @@
+[
+  {
+    "did": "did:ipvn7:d45e14b1893fbeb688c270a780fa0a5078df7b27744cad7bf433a1fe5889a2a6",
+    "name": "Notebook Dvd",
+    "public_key": "vaP+2A+7tuUu0r008tyHpjQ28wHwfndI1yxbShtcDCQ=",
+    "endpoints": [
+      "192.168.1.106:7001",
+      "wan_dynamic:7001"
+    ],
+    "virtual_ipv4": "10.7.206.8",
+    "virtual_ipv6": "fd07::ce08:eef5:4518:e684",
+    "auto_reconnect": true
+  }
+]
