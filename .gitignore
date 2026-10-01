@@ -1,0 +1,26 @@
+# Keystore y Secretos Privados (PROHIBIDO VERSIONAR CLAVES PRIVADAS)
+keystore/*.key
+keystore/node_identity.key
+config/firebase_credentials.json
+
+# Datos Locales y Registros
+data/*.log
+data/*.db
+data/ipvn7.log
+.agents/task.lock
+
+# Binarios de Salida
+bin/ipvn7.exe
+bin/ipvn7
+bin/ipvn7-cli
+bin/ipvn7-cli.exe
+dist/*.exe
+dist/*.zip
+!dist/guide.zip
+
+# Temporales de Sistema y Entorno
+*.tmp
+*.bak
+~*
+.DS_Store
+Thumbs.db

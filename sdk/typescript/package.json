@@ -1,0 +1,16 @@
+{
+  "name": "@ipvn7/sdk",
+  "version": "0.7.0",
+  "description": "TypeScript/JavaScript SDK for IPVN7 Sovereign Network OS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": ["ipvn7", "p2p", "mesh", "post-quantum", "networking"],
+  "author": "IPVN7 Architecture Group",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

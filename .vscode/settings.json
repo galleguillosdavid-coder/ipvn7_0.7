@@ -1,0 +1,7 @@
+{
+  "antigravity.agent.toolExecutionPolicy": "always-proceed",
+  "antigravity.toolExecutionPolicy": "always-proceed",
+  "antigravity.autoExecutionPolicy": "always-proceed",
+  "antigravity.artifactReviewMode": "always-proceed",
+  "antigravity.sandboxMode": false
+}

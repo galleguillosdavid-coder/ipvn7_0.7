@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IPvN7: Tu Propia Red, Tu Libertad Digital (Guía Interactiva)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Barra Superior -->
+    <header class="top-nav">
+      <div class="brand">
+        <span>🛡️ IPVN7 Network OS</span>
+        <span class="brand-badge">Soberano v0.7.0</span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-btn active" onclick="scrollToSection('que-es')">¿Qué es?</button>
+        <button class="nav-btn" onclick="scrollToSection('en-tu-vida')">En tu Vida</button>
+        <button class="nav-btn" onclick="scrollToSection('laboratorio')">Simuladores</button>
+        <button class="nav-btn" onclick="scrollToSection('arquitectura')">Arquitectura</button>
+        <button class="nav-btn" onclick="scrollToSection('modulos')">Posibilidades & Futuro</button>
+        <button class="nav-btn" onclick="scrollToSection('comparativa')">Comparativa</button>
+        <button class="nav-btn" onclick="scrollToSection('comenzar')">Probar en 1 Clic</button>
+      </nav>
+    </header>
+
+    <!-- Sección Hero: La Gran Metáfora -->
+    <section class="hero" id="que-es">
+      <div class="hero-pill">✨ Descubrimiento Progresivo</div>
+      <h1>Tu Propia Autopista Privada.<br>Sin Peajes. Sin Espías. Indestructible.</h1>
+      <p>
+        Hoy en día, cuando envías una foto o trabajas por Internet, tus datos viajan por carreteras públicas llenas de cámaras y servidores intermediarios. <b>IPvN7 conecta tus teléfonos y computadoras directamente entre sí</b> a través de un túnel cuántico que nadie puede espiar ni apagar.
+      </p>
+
+      <!-- Demostrador del Botón Zen y ECG Real -->
+      <div class="interactive-orb-container">
+        <div class="orb-card">
+          <div style="font-size: 13px; color: var(--txt-dim); margin-bottom: 8px; font-weight: 600;">PRUEBA EL CONTROL ZEN (TOCA EL BOTÓN CIRCULAR)</div>
+          <div class="orb-btn-wrapper">
+            <div class="orb-ring" id="orbRing"></div>
+            <button id="orbBtn" class="orb-btn orb-green" onclick="cycleOrb()">
+              <div id="orbIcon" style="font-size: 38px; line-height: 1;">⚡</div>
+              <div id="orbStatus" style="font-size: 14px; font-weight: 800; letter-spacing: 0.5px; margin-top: 4px;">PROTEGIDO</div>
+              <div id="orbSub" style="font-size: 10px; font-weight: 600; opacity: 0.8; margin-top: 2px;">AUTOPISTA PROPIA ACTIVA</div>
+            </button>
+          </div>
+
+          <!-- Mini Monitor Cardíaco ECG -->
+          <div class="ecg-box">
+            <div class="ecg-top">
+              <span id="ecgStatus" style="color: var(--green); font-weight: 700;">Ritmo Sinusal · Salud Óptima</span>
+              <span class="ecg-badge">❤️ <span id="bpmVal">72</span> BPM</span>
+            </div>
+            <canvas id="ecgCanvas" width="370" height="40" style="display:block; width:100%; height:40px;"></canvas>
+            <div style="text-align:right; margin-top:6px;"><button class="btn-more" onclick="showExplanation('zen')">+ Saber más: Física del Ritmo Vital</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capa 1: Visualización Comparativa Dinámica -->
+    <section class="section-block">
+      <span class="section-tag">Capa 1: La Revelación en 10 Segundos</span>
+      <h2 class="section-title">¿Cómo viajan tus datos hoy vs con IPvN7?</h2>
+      <p class="section-desc">
+        Observa en esta animación cómo la Internet tradicional te hace dar rodeos por servidores de empresas, mientras que con IPvN7 viajas en línea recta blindada.
+      </p>
+      <div style="background: #03050c; border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px;">
+        <canvas id="highwayCanvas" class="sim-canvas" width="900" height="210"></canvas>
+      </div>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="comp-card bad">
+          <span class="comp-badge bad">Internet Tradicional</span>
+          <h3>Lenta, Frágil y Vigilada</h3>
+          <ul>
+            <li>❌ <b>Pasa por servidores de terceros:</b> Tu información es analizada y almacenada en nubes comerciales.</li>
+            <li>❌ <b>Si el servidor cae, te quedas sin red:</b> Aunque tu compañero esté al lado tuyo.</li>
+            <li>❌ <b>Cifrado antiguo en riesgo:</b> Las computadoras cuánticas podrán descifrarlo en pocos años.</li>
+          </ul>
+          <div style="margin-top:12px;"><button class="btn-more" onclick="showExplanation('routers')">+ Saber más: ¿Qué lee el router de tu ISP?</button></div>
+        </div>
+        <div class="comp-card good">
+          <span class="comp-badge good">IPvN7 Network OS</span>
+          <h3>Directa, Soberana e Inquebrantable</h3>
+          <ul>
+            <li>✅ <b>De tú a tú (P2P real):</b> Conexión de luz directa entre tus equipos sin intermediarios.</li>
+            <li>✅ <b>Malla Indestructible:</b> Si una ruta falla, busca otro camino en 1 milisegundo.</li>
+            <li>✅ <b>Blindaje Post-Cuántico (ML-KEM-768):</b> Ni las supercomputadoras del futuro pueden romperlo.</li>
+          </ul>
+          <div style="margin-top:12px;"><button class="btn-more" onclick="showExplanation('p2p')">+ Saber más: ¿Cómo viaja la luz de tú a tú?</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capa 2: En tu Vida, tus Dispositivos, tu Trabajo y tu Comunidad -->
+    <section class="section-block" id="en-tu-vida">
+      <span class="section-tag">Capa 2: Transformación en tu Día a Día</span>
+      <h2 class="section-title">¿Para qué te sirve IPvN7 en la vida real?</h2>
+      <p class="section-desc">Selecciona cualquiera de las 4 áreas para ver el impacto tangible en tu rutina:</p>
+
+      <div class="grid-4">
+        <div class="sphere-card active" id="sphere-personal" onclick="selectSphere('personal')"><span class="sphere-icon">📱</span><div class="sphere-title">En tu Vida Personal</div><div class="sphere-desc">Tus fotos y videos entre celular y PC sin Google Drive ni límites de gigas.</div></div>
+        <div class="sphere-card" id="sphere-iot" onclick="selectSphere('iot')"><span class="sphere-icon">🖨️</span><div class="sphere-title">En tus Dispositivos</div><div class="sphere-desc">Impresoras, Smart TVs y cámaras protegidas de hackers con identidad soberana.</div></div>
+        <div class="sphere-card" id="sphere-work" onclick="selectSphere('work')"><span class="sphere-icon">💻</span><div class="sphere-title">En tu Trabajo</div><div class="sphere-desc">Acceso a tu PC de la oficina sin abrir puertos ni pagar Tailscale.</div></div>
+        <div class="sphere-card" id="sphere-community" onclick="selectSphere('community')"><span class="sphere-icon">🤝</span><div class="sphere-title">En tu Comunidad</div><div class="sphere-desc">Comparte salida a Internet con vecinos o amigos si el proveedor local está lento.</div></div>
+      </div>
+
+      <div id="sphereDetailBox" style="margin-top: 20px; padding: 20px; background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: var(--radius-md); font-size: 15px; color: var(--txt-primary); line-height: 1.6;">
+        📱 <b>En tu vida:</b> Comparte videos pesados y fotos en calidad original entre tu celular y tu PC al instante. Sin pagar Google One ni iCloud, sin pasar por servidores ajenos.
+      </div>
+    </section>
+
+    <!-- Capa 3: Laboratorio de Simulaciones Interactivas -->
+    <section class="section-block" id="laboratorio">
+      <span class="section-tag">Capa 3: Laboratorio de Pruebas Factuales</span>
+      <h2 class="section-title">Interactúa con la Física del Sistema</h2>
+      <p class="section-desc">Comprueba por ti mismo cómo reacciona IPvN7 ante situaciones extremas:</p>
+
+      <!-- Simulación 1: Ataque Cuántico -->
+      <div class="simulator-box">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">🧪 Experimento 1: El Escudo Post-Cuántico</h3>
+        <p style="font-size: 14px; color: var(--txt-secondary); margin-bottom: 16px;">
+          Lanza un ataque de computadora cuántica y observa qué ocurre con las contraseñas clásicas frente a la coraza de IPvN7:
+        </p>
+        <div class="sim-controls">
+          <button id="quantumBtn" class="btn-action" onclick="runQuantumAttack()">⚡ Lanzar Ataque Cuántico Simulado</button>
+          <button class="btn-more" onclick="showExplanation('quantum')">+ Saber más: Cripto Cuántica</button>
+        </div>
+        <div class="sim-log" id="quantumLog">
+          Presiona el botón para probar la resistencia matemática de ML-KEM-768...
+        </div>
+      </div>
+
+      <!-- Simulación 2: Corte de Red y Failover Kleinberg -->
+      <div class="simulator-box" style="margin-top: 30px;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">🧪 Experimento 2: Malla Indestructible (Corte de Cable)</h3>
+        <p style="font-size: 14px; color: var(--txt-secondary); margin-bottom: 16px;">
+          Simula que se rompe el cable del proveedor de Internet o se apaga un servidor intermedio. Observa cómo el enrutador Kleinberg encuentra otro camino sin detener tu conexión:
+        </p>
+        <div class="sim-controls">
+          <button id="meshBtn" class="btn-action red" onclick="toggleMeshCut()">✂️ Cortar Cable Principal (Simular Caída)</button>
+          <button class="btn-more" onclick="showExplanation('kleinberg')">+ Saber más: Malla Kleinberg</button>
+        </div>
+        <canvas id="meshCanvas" class="sim-canvas" width="900" height="200"></canvas>
+        <div class="sim-log" id="meshLog">
+          Todos los enlaces activos. Paquetes fluyendo por la ruta física más directa.
+        </div>
+      </div>
+    </section>
+
+    <!-- Capa 4: Arquitectura Profunda por Capas L0, L1, L2 -->
+    <section class="section-block" id="arquitectura">
+      <span class="section-tag">Capa 4: Arquitectura Profunda L0-L2</span>
+      <h2 class="section-title">El Motor Tecnológico por Dentro</h2>
+      <p class="section-desc">Selecciona cada nivel del protocolo para entender la ingeniería física y criptográfica que hace indestructible a IPvN7:</p>
+      
+      <div class="tech-tabs-bar">
+        <button class="tech-tab-btn active" id="tab-btn-l0" onclick="switchTechTab('l0')">🔐 Capa L0: Identidad y PQC</button>
+        <button class="tech-tab-btn" id="tab-btn-l1" onclick="switchTechTab('l1')">🌐 Capa L1: Enrutamiento Kleinberg</button>
+        <button class="tech-tab-btn" id="tab-btn-l2" onclick="switchTechTab('l2')">💓 Capa L2: Bio-Ritmo y Rendezvous</button>
+        <button class="tech-tab-btn" id="tab-btn-datagram" onclick="switchTechTab('datagram')">📦 Trama Física 1280B</button>
+      </div>
+
+      <div class="tech-panel active" id="tech-l0">
+        <h3 style="color:var(--cyan); margin-bottom:8px;">Capa L0: Criptografía Post-Cuántica y Soberanía Cero-Servidor</h3>
+        <p style="margin-bottom:10px;">Cada nodo genera su propio <b>Identificador Descentralizado (DID)</b> derivado de una clave Ed25519. El intercambio de claves implementa <b>NIST FIPS 203 ML-KEM-768 (Kyber)</b> combinado con X25519 y cero alocaciones de memoria (0 B/op).</p>
+        <ul style="padding-left:20px; font-size:13px; color:var(--txt-secondary);">
+          <li><b>Cero alocaciones:</b> Procesamiento en vuelo en buffers fijos de 1280B sin pausas de Garbage Collector.</li>
+          <li><b>Firmas compuestas:</b> Identidad verificable con curvas Ed25519 y blindaje cuántico Nivel 3.</li>
+        </ul>
+      </div>
+
+      <div class="tech-panel" id="tech-l1">
+        <h3 style="color:var(--green); margin-bottom:8px;">Capa L1: Enrutamiento Fractal Kleinberg y Resiliencia ZTNA</h3>
+        <p style="margin-bottom:10px;">IPvN7 no utiliza tablas de enrutamiento estáticas pesadas. Emplea el modelo de <b>Pequeños Mundos de Kleinberg con 12 anillos concéntricos</b>, garantizando convergencia óptima en tiempo $O(\log^2 N)$ entre trillones de nodos.</p>
+        <ul style="padding-left:20px; font-size:13px; color:var(--txt-secondary);">
+          <li><b>Perforación NAT:</b> STUN RFC 5389 + relays soberanos DERP para atravesar CGNAT sin tocar routers.</li>
+          <li><b>Cortafuegos ZTNA:</b> Todo paquete sin firma válida se descarta en nanosegundos (Default-Deny).</li>
+        </ul>
+      </div>
+
+      <div class="tech-panel" id="tech-l2">
+        <h3 style="color:var(--amber); margin-bottom:8px;">Capa L2: Telemetría Bio-Vital Cardíaca y Rendezvous Global</h3>
+        <p style="margin-bottom:10px;">La salud del enlace modula un <b>electrocardiograma (ECG) sinusal de 60 a 120 BPM</b>. Si el enlace cae, entra en asistolia (0 BPM), garantizando cero falsas promesas en pantalla.</p>
+        <ul style="padding-left:20px; font-size:13px; color:var(--txt-secondary);">
+          <li><b>Señalización efímera:</b> Directorio de descubrimiento global en Google Firebase RTDB como faro inicial.</li>
+          <li><b>Circuit Breaker P2P:</b> Establecido el canal UDP directo, el canal en la nube se silencia al 100%.</li>
+        </ul>
+      </div>
+
+      <div class="tech-panel" id="tech-datagram">
+        <h3 style="color:var(--cyan); margin-bottom:8px;">Anatomía de la Trama Física IPvN7 (MTU 1280B Rígido)</h3>
+        <p style="margin-bottom:10px;">Datagrama optimizado para máxima compatibilidad IPv6 y zero fragmentación en Internet pública:</p>
+        <div class="datagram-grid">
+          <div class="datagram-block"><b>Magic (2B)</b>0x4950 ("IP")</div>
+          <div class="datagram-block"><b>WireVer (1B)</b>0x07</div>
+          <div class="datagram-block"><b>MsgType (1B)</b>Data / STUN / Echo</div>
+          <div class="datagram-block"><b>Seq (8B)</b>Anti-Replay Counter</div>
+          <div class="datagram-block"><b>Source DID (32B)</b>Ed25519 Fingerprint</div>
+          <div class="datagram-block"><b>Target DID (32B)</b>Destination Node</div>
+          <div class="datagram-block" style="grid-column: span 2; border-color:var(--green);"><b>Payload Cifrado (1180B)</b>ChaCha20-Poly1305 / ML-KEM</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capa 5: Módulos Expansibles, Posibilidades y Futuro -->
+    <section class="section-block" id="modulos">
+      <span class="section-tag">Capa 5: Capacidades, Posibilidades y Futuro</span>
+      <h2 class="section-title">Posibilidades Actuales y Planes Futuros</h2>
+      <p class="section-desc">Despliega los módulos para descubrir qué puedes hacer hoy y la hoja de ruta que estamos construyendo:</p>
+
+      <div class="accordion">
+        <div class="acc-item" id="acc-actual">
+          <button class="acc-trigger" onclick="toggleAccordion('actual')"><span>🚀 Posibilidades Actuales que Abre IPvN7 Hoy</span><span class="acc-icon">▼</span></button>
+          <div class="acc-body">
+            <b>1. Envío masivo P2P:</b> Gigabytes directos entre PC y celular sin cuotas en Google Drive ni WeTransfer.<br>
+            <b>2. VPN Soberana 1-Clic:</b> Conexión de túnel cifrado a través de CGNAT y redes 4G/5G sin servidores centrales.<br>
+            <b>3. Aislamiento IoT ZTNA:</b> Smart TVs, impresoras y cámaras protegidas con Shadow DIDs invisibles a Internet.<br>
+            <b>4. Salida Soberana Dinámica:</b> Egress Gateway con BBR para saltar caídas de tu ISP por la ruta de un nodo amigo.<br>
+            <b>5. Enjambres de Agentes IA:</b> Canal nativo ultrarrápido A2A y MCP cifrado con PQC entre agentes sin nube.<br>
+            <button class="btn-more" onclick="showExplanation('p2p')">+ Ver Explicación Tri-Nivel</button>
+          </div>
+        </div>
+
+        <div class="acc-item" id="acc-futuro">
+          <button class="acc-trigger" onclick="toggleAccordion('futuro')"><span>🔮 Planes Futuros y Hoja de Ruta Soberana</span><span class="acc-icon">▼</span></button>
+          <div class="acc-body">
+            <b>1. App Móvil Zero-Battery (Android/iOS):</b> Demonio ultra-eficiente con wake-up por datagrama UDP push (&lt;1% batería diaria).<br>
+            <b>2. Malla Física Offline (LoRaWAN + Satelital):</b> Enrutamiento oportunista para rescates, catástrofes y zonas rurales sin fibra.<br>
+            <b>3. Sistema de Archivos Distribuido (IPvN7-DFS):</b> Almacenamiento descentralizado particionado con deduplicación PQC.<br>
+            <b>4. Consenso Agéntico Descentralizado:</b> Coordinación y toma de decisiones P2P entre inteligencias artificiales sin tokens ni blockchain especulativo.<br>
+            <button class="btn-more" onclick="showExplanation('quantum')">+ Ver Blindaje Futuro</button>
+          </div>
+        </div>
+
+        <div class="acc-item" id="acc-iot">
+          <button class="acc-trigger" onclick="toggleAccordion('iot')"><span>🖨️ Dispositivos Sombra para el Hogar (Shadow DIDs)</span><span class="acc-icon">▼</span></button>
+          <div class="acc-body">
+            Dispositivos locales sin cliente reciben identidad soberana en <code>10.7.100.0/24</code>. El nodo anfitrión actúa como Embajador Guardián L4 zero-copy con Wake-on-LAN. <br><button class="btn-more" onclick="showExplanation('shadow')">+ Ver Explicación Tri-Nivel</button>
+          </div>
+        </div>
+
+        <div class="acc-item" id="acc-hostile">
+          <button class="acc-trigger" onclick="toggleAccordion('hostile')"><span>🛡️ Superar Cortafuegos Hostiles y Redes Móviles 4G/5G</span><span class="acc-icon">▼</span></button>
+          <div class="acc-body">
+            Detrás de CGNAT simétrico o puertos bloqueados, IPvN7 activa STUN RFC 5389, relays DERP y camuflaje TLS 1.3 RFC 8446 en puerto 443 indistinguible de HTTPS. <br><button class="btn-more" onclick="showExplanation('routers')">+ Ver Explicación Tri-Nivel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capa 6: Comparativa Factual -->
+    <section class="section-block" id="comparativa">
+      <span class="section-tag">Capa 6: La Balanza Factual</span>
+      <h2 class="section-title">IPvN7 vs El Resto del Mundo</h2>
+      <p class="section-desc">Comparación honesta con las soluciones existentes en el mercado:</p>
+      <div class="comp-table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr><th>Capacidad</th><th>VPN Comercial Típica</th><th>Tailscale / WireGuard</th><th class="highlight-col">IPvN7 Network OS</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><b>¿Quién ve tus datos?</b></td><td>La empresa proveedora de la VPN</td><td>Servidor central de coordinación</td><td class="highlight-col">Nadie (100% De Par a Par)</td></tr>
+            <tr><td><b>¿Requiere Servidores Centrales?</b></td><td>Sí, obligatorios</td><td>Sí (Servidores de autenticación)</td><td class="highlight-col">CERO servidores centrales</td></tr>
+            <tr><td><b>Protección Post-Cuántica (PQC)</b></td><td>No (Cifrado clásico RSA/ECC)</td><td>Parcial / Experimental</td><td class="highlight-col">Nativa (ML-KEM-768 FIPS 203)</td></tr>
+            <tr><td><b>Costo para el Usuario</b></td><td>Suscripción mensual de pago</td><td>Planes de pago para empresas</td><td class="highlight-col">100% Libre y Soberano ($0)</td></tr>
+            <tr><td><b>Facilidad de Conexión</b></td><td>Cuentas, logins y contraseñas</td><td>Autenticación con Google/GitHub</td><td class="highlight-col">1 Clic o 1 Comando sin cuentas</td></tr>
+            <tr><td><b>Bio-Ritmo Cardíaco en Vivo</b></td><td>No</td><td>No</td><td class="highlight-col">Sí (ECG y latido biomórfico)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Capa 7: Pruébalo Ahora Mismo en 1 Clic -->
+    <section class="cta-box" id="comenzar">
+      <h2>Comienza Tu Soberanía en 30 Segundos</h2>
+      <p>Sin formularios, sin dejar tu correo, sin registrar tarjetas. IPvN7 es portátil y se ejecuta al instante.</p>
+      <div class="cta-btns">
+        <a href="../dist/Instalador_VPN_I7.exe" download class="btn-action" style="text-decoration:none; padding: 14px 28px; font-size: 15px;">🚀 Descargar Instalador 1-Clic (.EXE)</a>
+        <button class="btn-action green" onclick="cycleOrb()" style="padding: 14px 28px; font-size: 15px;">⚡ Probar Modo Activo en este Panel</button>
+      </div>
+      <div style="margin-top: 18px; font-size: 12px; color: var(--txt-dim);">Compatible con Windows 10/11, Linux, macOS y Docker · Cero dependencias externas</div>
+    </section>
+  </div>
+
+  <!-- Modal Interactivo Tri-Nivel de Explicación Profunda -->
+  <div id="explanationModal" class="modal-backdrop" onclick="closeExplanation(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modalTitle">Título</div>
+          <div class="modal-subtitle" id="modalSubtitle">Subtítulo</div>
+        </div>
+        <button class="modal-close" onclick="closeExplanation()">&times;</button>
+      </div>
+      <div class="level-tabs">
+        <button class="level-btn active" id="lvl-simple" onclick="setExpLevel('simple')">🌱 1. Para Todos</button>
+        <button class="level-btn" id="lvl-analogy" onclick="setExpLevel('analogy')">💡 2. Analogía & Ejemplo</button>
+        <button class="level-btn" id="lvl-technical" onclick="setExpLevel('technical')">🔬 3. Ingeniero / IA</button>
+      </div>
+      <div class="modal-body" id="modalBody">Contenido</div>
+    </div>
+  </div>
+
+  <script src="explanations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
