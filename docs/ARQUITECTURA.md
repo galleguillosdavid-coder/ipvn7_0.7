@@ -57,6 +57,52 @@ Ninguna funcionalidad se declara "production-ready" ni "certificada" sin evidenc
 ## 3. Invariantes del Núcleo Mínimo
 
 1. **Invariante de MTU (1280B):** Toda trama en el alambre respeta el límite estricto de 1280 bytes para garantizar cero fragmentación en cualquier red física (RFC 8200).
-2. **Zero-Copy Local:** El pipeline central mantiene 0 B/op y 0 allocs/op en la canalización básica (`BenchmarkLinearPipeline_Execute`).
+2. **Orquestación Zero-Copy en Pipeline Interno:** La canalización básica de procesamiento interno mantiene 0 B/op y 0 allocs/op (`BenchmarkLinearPipeline_Execute`).
 3. **Criptografía Estándar FIPS 203:** Intercambio post-cuántico basado en el estándar canónico oficial (`crypto/mlkem`) con decapsulación e *Implicit Rejection*.
 4. **Desacoplamiento Estricto:** Prohibido que componentes periféricos (WASM, MCP, UI, DNS) contaminen o introduzcan dependencias en el Núcleo Mínimo I7.
+
+---
+
+## 4. Orden Canónico del Datapath y Separación de Responsabilidades (Fase 8)
+
+El camino crítico de procesamiento en recepción sigue una secuencia estricta y unidireccional donde cada subsistema responde a una pregunta única y desacoplada:
+
+```text
+UDP Socket
+   │
+   ▼
+[1. Frame Validation]      ──► ¿El formato y magic bytes son válidos? (O(1))
+   │
+   ▼
+[2. Identity Verification] ──► ¿Quién es el emisor? (DID autocertificable Ed25519)
+   │
+   ▼
+[3. Anti-Replay L1]        ──► ¿Ya vimos este paquete? (originDID:SessionID:Sequence:Timestamp)
+   │
+   ▼
+[4. Session Lookup]        ──► ¿Existe sesión simétrica activa? (PQC ML-KEM-768 FIPS 203)
+   │
+   ▼
+[5. ZTNA / Authorization]  ──► ¿Tiene permiso para comunicarse? (Default-Deny)
+   │
+   ▼
+[6. AEAD Decrypt]          ──► ¿El contenido es íntegro y auténtico? (ChaCha20-Poly1305)
+   │
+   ▼
+[7. Routing / Next-Hop]    ──► ¿A dónde va? (Distancia XOR Kleinberg / K-buckets)
+   │
+   ▼
+[8. Application / TUN]     ──► Entrega de datos útiles al sistema operativo o aplicación
+```
+
+### Reglas Arquitectónicas de Aislamiento
+* **El enrutamiento (Routing) NO decide identidad:** Solo determina el siguiente salto topológico hacia el destino.
+* **La identidad (Identity) NO decide autorización:** Solo comprueba matemáticamente que el emisor posee la clave privada vinculada al DID.
+* **La autorización (ZTNA) NO descifra:** Solo evalúa si la política local permite tráfico del DID autenticado.
+* **El cifrado (AEAD) NO decide enrutamiento:** Solo garantiza confidencialidad e integridad del payload.
+* **El Anti-Replay NO evalúa permisos:** Solo garantiza que ningún paquete o secuencia sea procesado más de una vez en la misma sesión.
+
+### Mediciones Factuales de Rendimiento
+* **Orquestación de Pipeline:** 32.06 ns/op | 0 B/op | 0 allocs/op.
+* **Datapath Criptográfico Completo End-to-End (`BenchmarkDatapathEndToEnd`):** 3.68 µs/op | 992 B/op | 18 allocs/op (~270,000 datagramas/segundo por hilo en CPU de 1.1 GHz).
+

@@ -45,6 +45,12 @@ func TestAdversarial_TestA_FakeSourceDID(t *testing.T) {
 	}
 }
 
+// TestHandshake_DIDSpoofing implementa la prueba de ataque formal requerida por el checklist (Fase 1.4):
+// Mallory declara SourceDID = Alice con KEM válido pero firmado por Mallory -> REJECT, NO SESSION, NO AUTHORIZATION.
+func TestHandshake_DIDSpoofing(t *testing.T) {
+	TestAdversarial_TestA_FakeSourceDID(t)
+}
+
 // TestAdversarial_TestB_InvalidSignature prueba que un paquete con SourceDID de Alice
 // pero firmado con la clave privada de Mallory es rechazado.
 func TestAdversarial_TestB_InvalidSignature(t *testing.T) {
