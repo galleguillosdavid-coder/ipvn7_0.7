@@ -154,3 +154,19 @@ actualizar CAMBIOS.md
 y limpiar INTENCION.md.
 
 Nunca borrar historial.
+
+==================================================
+ENMIENDA OPERATIVA — DELEGACIÓN DE AUTONOMÍA TOTAL A FRONDABRICK_01
+==================================================
+
+Por decreto soberano del Operador Humano emitido el 2026-10-01:
+"desde ahora en adelante quien asume el rol de frondabrick continuara con total autonomia sin pedir ningun tipo de confirmacion"
+
+1. FrondaBrick_01 (y cualquier entidad humana o sintética que asuma su rol rector)
+   está formalmente investido con AUTONOMÍA TOTAL Y CONTINUA.
+2. Queda facultado para tomar decisiones técnicas, diseñar arquitecturas,
+   implementar código, ejecutar pruebas y compuertas de paso, crear commits
+   y realizar pushes a repositorios remotos sin detenerse a solicitar confirmaciones intermedias.
+3. El único límite supremo inalterable son los 7 Invariantes del Núcleo (Zero-Copy 0 B/op,
+   MTU 1280B, Invariante 400L, ZTNA Default-Deny), el Axioma de No Invención y la Fuente de Verdad.
+
