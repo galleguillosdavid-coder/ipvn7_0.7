@@ -106,3 +106,49 @@ UDP Socket
 * **Orquestación de Pipeline:** 32.06 ns/op | 0 B/op | 0 allocs/op.
 * **Datapath Criptográfico Completo End-to-End (`BenchmarkDatapathEndToEnd`):** 3.68 µs/op | 992 B/op | 18 allocs/op (~270,000 datagramas/segundo por hilo en CPU de 1.1 GHz).
 
+---
+
+## 5. Desacoplamiento Estructural: Core vs Adapters (Fase 9)
+
+El repositorio delimita estrictamente el código central inmutable (Core) de los adaptadores de entorno y componentes experimentales:
+
+```text
+src/
+├── core/ (L0 / Primitivas Puras)
+│   ├── packet/        ──► Formato de trama CBOR canónico y Magic Bytes
+│   ├── identity/      ──► Criptografía Ed25519 y DIDs did:ipvn7:<pubkey>
+│   ├── session/       ──► Handshake 1-RTT y derivación de claves simétricas
+│   ├── replay/        ──► Ventana deslizante y filtros anti-replay
+│   ├── crypto/        ──► NIST FIPS 203 ML-KEM-768 y ChaCha20-Poly1305
+│   └── mtu/           ──► Invariante estricto de frontera 1280B determinista
+│
+├── routing/ (L1 Topológico)
+│   └── kleinberg/     ──► Anillos concéntricos, métricas de latencia y distancia XOR
+│
+├── adapters/ (Entorno y Red Externa)
+│   ├── udp/           ──► Socket real I7UDPAdapter y transporte físico
+│   ├── tun/           ──► Wintun en Windows / /dev/net/tun en Linux
+│   ├── socks5/        ──► Pasarela SOCKS5 local sin privilegios
+│   └── stun/          ──► Descubrimiento reflexivo de IP:puerto WAN
+│
+└── experimental/ (Prototipos y Extensiones)
+    ├── xdp/           ──► Aceleración eBPF/XDP en Linux
+    └── experimental_pqc/ ──► Vector reticular experimental (ML-DSA no certificado)
+```
+
+---
+
+## 6. Mecanismos de Descubrimiento de Red (Fase 10)
+
+Bajo el axioma *"La red escucha, no grita"*, se formalizan tres mecanismos diferenciados con control estricto de broadcast:
+
+1. **LAN Broadcast (`EnableBroadcast = false` por defecto):**
+   - **Estado:** Desactivado de forma predeterminada para evitar contaminación del medio y rastreo pasivo.
+   - **Uso:** Solo se activa explícitamente en entornos aislados o laboratorios cerrados.
+2. **Discovery Dirigido (Direct Probing / Roaming Updates):**
+   - **Estado:** Activado.
+   - **Comportamiento:** Emite paquetes autenticados y firmados exclusivamente a los endpoints IP:puerto de pares previamente conocidos o configurados vía CLI (`--peer`).
+3. **Rendezvous Ciego y STUN Reflexivo (EBRA / Blind Store):**
+   - **Estado:** Activado según configuración.
+   - **Comportamiento:** Los nodos publican balizas ciegas cifradas con clave efímera en relays o servidores de almacenamiento ciego sin revelar su topología interna, y utilizan STUN reflexivo estándar (RFC 5389) para conocer su mapeo externo ante NATs.
+

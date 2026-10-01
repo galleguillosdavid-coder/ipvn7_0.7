@@ -302,3 +302,53 @@ func TestPQC_PhysicalUDPLoopback_Bidirectional(t *testing.T) {
 		t.Fatalf("Carga útil descifrada por Alice no coincide: %s vs %s", string(decryptedA), string(rawPayloadB))
 	}
 }
+
+// TestHybridKEM_SecurityAudits implementa las pruebas requeridas por la Fase 6 del checklist:
+// clave incorrecta, ciphertext corrupto, intento de downgrade e incompatibilidad de versión.
+func TestHybridKEM_SecurityAudits(t *testing.T) {
+	bob, err := GenerateHybridKeyPair("did:ipvn7:bob")
+	if err != nil {
+		t.Fatalf("Error creando par Bob: %v", err)
+	}
+	charlie, err := GenerateHybridKeyPair("did:ipvn7:charlie")
+	if err != nil {
+		t.Fatalf("Error creando par Charlie: %v", err)
+	}
+
+	aliceKey, cipher, err := Encapsulate(bob.ClassicalKEMPub, bob.MLKEMPubHex)
+	if err != nil {
+		t.Fatalf("Encapsulate failed: %v", err)
+	}
+
+	// 1. Clave incorrecta: Charlie intenta decapsular criptograma de Bob
+	charlieKey, err := charlie.Decapsulate(cipher)
+	if err == nil && bytes.Equal(aliceKey, charlieKey) {
+		t.Fatalf("Fallo de seguridad: Charlie derivó la misma clave que Bob!")
+	}
+
+	// 2. Ciphertext corrupto: modificación de 1 bit en FullPQCCiphertext
+	corruptCipher := *cipher
+	corruptPQC := make([]byte, len(cipher.FullPQCCiphertext))
+	copy(corruptPQC, cipher.FullPQCCiphertext)
+	corruptPQC[0] ^= 0xFF
+	corruptCipher.FullPQCCiphertext = corruptPQC
+
+	corruptKey, err := bob.Decapsulate(&corruptCipher)
+	if err == nil && bytes.Equal(aliceKey, corruptKey) {
+		t.Fatalf("Fallo de seguridad: Bob derivó la misma clave con ciphertext PQC corrupto!")
+	}
+
+	// 3. Intento de downgrade: modificar algoritmo a "X25519-Only"
+	downgradeCipher := *cipher
+	downgradeCipher.Algorithm = "X25519-Only"
+	if _, err := bob.Decapsulate(&downgradeCipher); err == nil {
+		t.Fatalf("Fallo de seguridad: Decapsulate aceptó algoritmo de downgrade!")
+	}
+
+	// 4. Incompatibilidad de versión / tamaño truncado
+	truncatedCipher := *cipher
+	truncatedCipher.FullPQCCiphertext = cipher.FullPQCCiphertext[:500]
+	if _, err := bob.Decapsulate(&truncatedCipher); err == nil {
+		t.Fatalf("Fallo de seguridad: Decapsulate aceptó ciphertext truncado!")
+	}
+}
