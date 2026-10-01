@@ -4,6 +4,8 @@ daemon.py - CLI Wrapper para el Daemon Supervisor IPVN7.
 Uso:
   python sistema/bin/daemon.py status
   python sistema/bin/daemon.py run-once
+  python sistema/bin/daemon.py start [intervalo_segundos]
+  python sistema/bin/daemon.py reprogram <intervalo_segundos>
   python sistema/bin/daemon.py mode <RUN|PAUSE|SAFE|STOP>
 """
 import sys

@@ -43,3 +43,34 @@ REPETIR
 2. **Backoff Adaptativo:** Ante fallos continuos, duplica el tiempo de espera hasta el máximo configurado; si alcanza `max_fallos_consecutivos`, pasa a `PAUSE` o `SAFE`.
 3. **Parada por Scope Violation:** Ante la detección de modificaciones no autorizadas (ej. cambios en `src/`), pasa inmediatamente a `SAFE` y escribe en [`sistema/RECHAZOS.md`](../RECHAZOS.md).
 4. **Inmutabilidad:** El daemon jamás modifica `CONSTITUCION.md` ni `AUTONOMIA.json`.
+
+---
+
+## 4. Comandos CLI, Descanso y Reprogramación Dinámica
+
+El daemon cuenta con un wrapper CLI unificado en `sistema/bin/daemon.py`:
+
+```bash
+# Ver estado actual del supervisor y próximo ciclo programado
+python sistema/bin/daemon.py status
+
+# Ejecutar un único ciclo síncrono
+python sistema/bin/daemon.py run-once
+
+# Iniciar bucle continuo autónomo (con descanso e intervalo opcional en segundos)
+python sistema/bin/daemon.py start [intervalo_segundos]
+
+# Reprogramar dinámicamente el periodo de descanso entre ciclos
+python sistema/bin/daemon.py reprogram <intervalo_segundos>
+
+# Cambiar modo de operación en caliente
+python sistema/bin/daemon.py mode <RUN|PAUSE|SAFE|STOP>
+```
+
+### Ciclo de Descanso y Reprogramación
+Al culminar cada ciclo o tarea, el supervisor:
+1. Lee la configuración activa de descanso (`intervalo_actual_segundos`).
+2. Persiste la marca temporal del próximo despertar en `estado.json` (`proximo_ciclo`).
+3. Entra en reposo / descanso adaptativo monitoreando señales de terminación o reprogramaciones en caliente.
+4. Al expirar el descanso, despierta de forma autónoma y ejecuta el siguiente ciclo.
+

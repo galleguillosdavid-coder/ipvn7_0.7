@@ -231,6 +231,72 @@ class DaemonSupervisor:
                         return False
         return True
 
+    def reprogramar_intervalo(self, nuevo_intervalo: int) -> tuple[bool, str]:
+        """Reprograma dinámicamente el descanso entre ciclos del daemon."""
+        if nuevo_intervalo < 5 or nuevo_intervalo > 86400:
+            return False, "El intervalo debe estar entre 5 y 86400 segundos."
+        self.config["intervalo_segundos"] = nuevo_intervalo
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            json.dump(self.config, f, indent=2, ensure_ascii=False)
+        self.estado["intervalo_actual_segundos"] = nuevo_intervalo
+        self.guardar_estado()
+        return True, f"Daemon reprogramado con éxito. Nuevo intervalo de descanso: {nuevo_intervalo}s"
+
+    def bucle_continuo(self, intervalo_override: int = None):
+        """Ejecuta el ciclo continuo del daemon con descanso y reprogramación dinámica."""
+        if intervalo_override:
+            self.reprogramar_intervalo(intervalo_override)
+
+        ok_lock, msg_lock = self.adquirir_lock()
+        if not ok_lock:
+            print(f"[ERROR] {msg_lock}")
+            return False
+
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Daemon Supervisor IPVN7 iniciado en modo continuo.")
+        try:
+            while True:
+                # Recargar configuración fresca en cada iteración
+                self.config = self.cargar_config()
+                modo_actual = self.estado.get("modo", "RUN")
+                if modo_actual == "STOP":
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Modo STOP detectado. Deteniendo supervisor.")
+                    break
+
+                # Ejecutar ciclo de supervisión/tarea
+                ok, msg = self.ejecutar_ciclo()
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Resultado Ciclo: {'[OK]' if ok else '[AVISO]'} {msg}")
+
+                # Calcular periodo de descanso programado
+                descanso = self.estado.get("intervalo_actual_segundos", self.config.get("intervalo_segundos", 300))
+                proximo_ts = time.time() + descanso
+                proximo_str = datetime.fromtimestamp(proximo_ts).strftime("%Y-%m-%d %H:%M:%S")
+                self.estado["proximo_ciclo"] = proximo_str
+                self.guardar_estado()
+
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [DESCANSO] Tarea finalizada. Tomando descanso de {descanso}s.")
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] [REPROGRAMACIÓN] Próxima ejecución programada para: {proximo_str}")
+
+                # Esperar el descanso de forma sensible a cambios
+                while time.time() < proximo_ts:
+                    time.sleep(1)
+                    try:
+                        estado_fresco = self.cargar_estado()
+                        if estado_fresco.get("modo") == "STOP":
+                            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Interrupción por modo STOP solicitado.")
+                            return True
+                        nuevo_int = estado_fresco.get("intervalo_actual_segundos")
+                        if nuevo_int and nuevo_int != descanso:
+                            descanso = nuevo_int
+                            proximo_ts = min(proximo_ts, time.time() + descanso)
+                    except Exception:
+                        pass
+        except KeyboardInterrupt:
+            print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Interrupción recibida (Ctrl+C).")
+        finally:
+            self.liberar_lock()
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Lock liberado. Daemon en reposo.")
+        return True
+
 def main():
     supervisor = DaemonSupervisor(repo_root)
     subcmd = sys.argv[1].lower() if len(sys.argv) > 1 else "status"
@@ -246,6 +312,7 @@ def main():
         print(f"Último objetivo:          {supervisor.estado.get('ultimo_objetivo')} ({supervisor.estado.get('estado_ultimo_objetivo')})")
         print(f"Fallos consecutivos:      {supervisor.estado.get('fallos_consecutivos')}")
         print(f"Intervalo programado:     {supervisor.estado.get('intervalo_actual_segundos')}s")
+        print(f"Próximo ciclo programado: {supervisor.estado.get('proximo_ciclo')}")
         print(f"Motivo parada/pausa:      {supervisor.estado.get('motivo_parada')}")
         sys.exit(0)
 
@@ -261,6 +328,28 @@ def main():
         finally:
             supervisor.liberar_lock()
 
+    elif subcmd == "start":
+        intervalo = None
+        if len(sys.argv) > 2:
+            try:
+                intervalo = int(sys.argv[2])
+            except ValueError:
+                pass
+        supervisor.bucle_continuo(intervalo_override=intervalo)
+
+    elif subcmd == "reprogram":
+        if len(sys.argv) < 3:
+            print("Uso: supervisor.py reprogram <segundos>")
+            sys.exit(1)
+        try:
+            nuevo_int = int(sys.argv[2])
+            ok, msg = supervisor.reprogramar_intervalo(nuevo_int)
+            print(f"[{'OK' if ok else 'ERROR'}] {msg}")
+            sys.exit(0 if ok else 1)
+        except ValueError:
+            print("[ERROR] El intervalo debe ser un número entero.")
+            sys.exit(1)
+
     elif subcmd == "mode":
         if len(sys.argv) < 3:
             print("Uso: supervisor.py mode <RUN|PAUSE|SAFE|STOP>")
@@ -271,7 +360,7 @@ def main():
 
     else:
         print(f"Comando desconocido: {subcmd}")
-        print("Comandos disponibles: status, run-once, mode <RUN|PAUSE|SAFE|STOP>")
+        print("Comandos disponibles: status, run-once, start [intervalo_s], reprogram <intervalo_s>, mode <RUN|PAUSE|SAFE|STOP>")
         sys.exit(1)
 
 if __name__ == "__main__":

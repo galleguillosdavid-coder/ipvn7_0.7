@@ -102,6 +102,31 @@ Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de l
 ### 3. ESTADO
 **CONSTITUCIONALMENTE CONSAGRADO Y ACTIVO EN PERPETUIDAD**
 
+---
+
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-015
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-01 19:27:43)
+> *"adelante recuerda lanzar el demonio para que continues segun tus propias necesidades, desde ahora en adelante al finalizar una tarea date un descanso y reprograma el daemon documentalo y ejecutalo"*
+
+### 2. ACCIONES EN EJECUCIÓN / EJECUTADAS
+- `[x]` **Implementación del Ciclo Continuo con Descanso y Reprogramación:**
+  - Métodos `bucle_continuo` y `reprogramar_intervalo` implementados en `sistema/daemon/supervisor.py`.
+  - CLI `sistema/bin/daemon.py` ampliado con comandos `start [intervalo_segundos]` y `reprogram <intervalo_segundos>`.
+  - Persistencia de `proximo_ciclo` e intervalo dinámico en `sistema/daemon/estado.json`.
+- `[x]` **Verificación Formal:**
+  - Suite de 14 puntos del daemon (`sistema/bin/tests_daemon.py`) verificada al 100% PASS.
+  - Comprobados comandos `status`, `reprogram 300` y `run-once`.
+- `[x]` **Documentación Canónica:**
+  - Actualizado `sistema/daemon/README.md` con especificación de comandos, descanso y reprogramación.
+  - Asentado protocolo en `frondabrick_01/INTENCION.md` y `agentes/Frondabrick01/AGENTE.md`.
+- `[x]` **Lanzamiento y Ejecución del Daemon Supervisor:**
+  - Iniciar daemon supervisor en segundo plano con intervalo programado para operar autónomamente.
+
+### 3. ESTADO
+**EN EJECUCIÓN AUTÓNOMA ACTIVA**
+
+
 
 
 

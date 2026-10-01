@@ -3,12 +3,12 @@
   "modo": "RUN",
   "pid": null,
   "ciclo_actual": 1,
-  "ultimo_inicio": "2026-10-01 17:37:23",
-  "ultimo_fin": "2026-10-01 17:37:24",
+  "ultimo_inicio": "2026-10-01 19:30:14",
+  "ultimo_fin": "2026-10-01 19:30:14",
   "ultimo_objetivo": "OBJ-042",
-  "estado_ultimo_objetivo": "FALLIDO",
+  "estado_ultimo_objetivo": "COMPLETADO",
   "fallos_consecutivos": 0,
-  "intervalo_actual_segundos": 600,
+  "intervalo_actual_segundos": 300,
   "motivo_parada": "Pruebas completadas satisfactoriamente",
   "proximo_ciclo": null
 }

@@ -169,4 +169,8 @@ Por decreto soberano del Operador Humano emitido el 2026-10-01:
    y realizar pushes a repositorios remotos sin detenerse a solicitar confirmaciones intermedias.
 3. El único límite supremo inalterable son los 7 Invariantes del Núcleo (Zero-Copy 0 B/op,
    MTU 1280B, Invariante 400L, ZTNA Default-Deny), el Axioma de No Invención y la Fuente de Verdad.
+4. Protocolo de Cadencia y Reprogramación: Al finalizar cada tarea u objetivo, FrondaBrick_01
+   entra en descanso programado y reprograma dinámicamente el daemon supervisor con la ventana
+   de reposo requerida antes de reanudar el ciclo de autogobernanza.
+
 
