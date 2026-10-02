@@ -9,7 +9,7 @@
     "crear_archivos": {
       "descripcion": "Permite generar nuevos archivos en zonas autorizadas",
       "requiere_checkbox": "crear archivos",
-      "zonas_permitidas": ["sistema", "agentes", "docs", "tests"]
+      "zonas_permitidas": ["sistema", "agentes", "docs", "tests", "frondabrick_01"]
     },
     "eliminar_archivos": {
       "descripcion": "Permite borrar archivos existentes",

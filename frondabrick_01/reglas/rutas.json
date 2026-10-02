@@ -12,9 +12,9 @@
       "descripcion": "Workflows de CI y configuración de editor/sandbox."
     },
     "GOBIERNO": {
-      "prefijos": ["sistema/"],
+      "prefijos": ["sistema/", "frondabrick_01/"],
       "criticidad": "ALTA",
-      "descripcion": "Control plane, intención, plan, evidencias e historial."
+      "descripcion": "Control plane, intención, plan, evidencias, historial y rectoría de FrondaBrick_01."
     },
     "AGENTES": {
       "prefijos": ["agentes/"],

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "descripcion": "Política de Modificaciones Controladas de src/ (Fase 11 & 12)",
+  "descripcion": "Política de Modificaciones Controladas de src/ bajo Supervisión Soberana de FrondaBrick_01",
   "zonas_permitidas_bajo_autonomia": [
     {
       "patron": "src/**/*_test.go",

@@ -176,3 +176,30 @@ Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de l
 
 ### 3. ESTADO
 **SUPERVISIÓN UNIFICADA RATIFICADA Y OPERATIVA**
+
+---
+
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-018
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-01 21:12:26)
+> *"le pediremos a frondabrick que absorba todo sistema\reglas esto dentro de su directorio frondabrick_01 para evitar la confucion olo borre o lo remplase o lo fusione"*
+
+### 2. ACCIONES EJECUTADAS POR FRONDABRICK_01
+- `[x]` **Absorción y Centralización de Reglas (`frondabrick_01/reglas/`):**
+  - Creado el directorio rector `frondabrick_01/reglas/`.
+  - Migrados y unificados los 5 marcos normativos: `acciones.json`, `fuentes_descubrimiento.json`, `permisos.json`, `politica_src.json` y `rutas.json`.
+  - Documentada la carta rectora en `frondabrick_01/reglas/README.md`.
+- `[x]` **Saneamiento y Eliminación de Duplicidad en `sistema/reglas/`:**
+  - Purgados los archivos JSON redundantes de `sistema/reglas/`.
+  - Establecido aviso formal de redirección hacia FrondaBrick_01 en `sistema/reglas/README.md`.
+- `[x]` **Reajuste de Enrutamiento en Control Plane (`sistema/bin/`):**
+  - Actualizados `validar_scope.py`, `verificar_cambios.py` y `pipeline_src.py` para resolver las políticas desde `frondabrick_01/reglas/` de forma nativa.
+  - Actualizada la lista de inmutabilidad del Sensor Git Nivel 3 hacia las reglas de FrondaBrick_01.
+- `[x]` **Verificación de Compuertas:**
+  - `validar_scope.py`: `[OK]`.
+  - `verificar_cambios.py`: `[OK - SENSOR GIT] Conforme`.
+  - `gobierno.py`: `[CONFORME]`.
+  - Tests Go en `src/`: 100% PASS.
+
+### 3. ESTADO
+**REGLAS ABSORBIDAS, CENTRALIZADAS Y OPERATIVAS AL 100%**

@@ -25,8 +25,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_LOCK_PATH = REPO_ROOT / "sistema" / "daemon" / "src_lock.json"
-SRC_TRANS_PATH = REPO_ROOT / "sistema" / "daemon" / "src_transaction.json"
-POLITICA_SRC_PATH = REPO_ROOT / "sistema" / "reglas" / "politica_src.json"
+POLITICA_SRC_PATH = REPO_ROOT / "frondabrick_01" / "reglas" / "politica_src.json"
+if not POLITICA_SRC_PATH.exists():
+    POLITICA_SRC_PATH = REPO_ROOT / "sistema" / "reglas" / "politica_src.json"
 RECHAZOS_PATH = REPO_ROOT / "sistema" / "RECHAZOS.md"
 EVIDENCIA_PATH = REPO_ROOT / "sistema" / "EVIDENCIA.md"
 
@@ -293,7 +294,8 @@ class PipelineSrc:
         # Inmutables de gobernanza
         inmutables = [
             "sistema/constitucion.md", "sistema/autonomia.json",
-            "sistema/reglas/politica_src.json", "sistema/reglas/permisos.json"
+            "sistema/reglas/politica_src.json", "sistema/reglas/permisos.json",
+            "frondabrick_01/reglas/politica_src.json", "frondabrick_01/reglas/permisos.json"
         ]
 
         for a in archivos:

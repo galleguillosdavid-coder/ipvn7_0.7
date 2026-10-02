@@ -10,8 +10,13 @@ from validar_intencion import parse_intencion
 
 def validar_alcance(repo_root: Path):
     intencion_path = repo_root / "sistema" / "INTENCION.md"
-    permisos_path = repo_root / "sistema" / "reglas" / "permisos.json"
-    rutas_path = repo_root / "sistema" / "reglas" / "rutas.json"
+    permisos_path = repo_root / "frondabrick_01" / "reglas" / "permisos.json"
+    if not permisos_path.exists():
+        permisos_path = repo_root / "sistema" / "reglas" / "permisos.json"
+
+    rutas_path = repo_root / "frondabrick_01" / "reglas" / "rutas.json"
+    if not rutas_path.exists():
+        rutas_path = repo_root / "sistema" / "reglas" / "rutas.json"
 
     ok, intencion = parse_intencion(intencion_path)
     if not ok:

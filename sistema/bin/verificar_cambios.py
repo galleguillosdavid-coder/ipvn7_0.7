@@ -61,7 +61,10 @@ def verificar_scope_git(repo_root: Path):
     import json
 
     # Cargar política de src si existe
-    politica_src_path = repo_root / "sistema" / "reglas" / "politica_src.json"
+    politica_src_path = repo_root / "frondabrick_01" / "reglas" / "politica_src.json"
+    if not politica_src_path.exists():
+        politica_src_path = repo_root / "sistema" / "reglas" / "politica_src.json"
+
     bloqueados_src = []
     if politica_src_path.exists():
         try:
@@ -87,9 +90,9 @@ def verificar_scope_git(repo_root: Path):
     inmutables_gobierno = [
         "sistema/constitucion.md",
         "sistema/autonomia.json",
-        "sistema/reglas/politica_src.json",
-        "sistema/reglas/permisos.json",
-        "sistema/reglas/rutas.json"
+        "frondabrick_01/reglas/politica_src.json",
+        "frondabrick_01/reglas/permisos.json",
+        "frondabrick_01/reglas/rutas.json"
     ]
 
     violaciones = []
