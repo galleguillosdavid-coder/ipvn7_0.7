@@ -2,13 +2,13 @@
   "version": "1.0",
   "modo": "RUN",
   "pid": null,
-  "ciclo_actual": 91,
-  "ultimo_inicio": "2026-10-02 14:00:13",
-  "ultimo_fin": "2026-10-02 14:00:13",
+  "ciclo_actual": 93,
+  "ultimo_inicio": "2026-10-02 14:30:26",
+  "ultimo_fin": "2026-10-02 14:30:26",
   "ultimo_objetivo": "OBJ-002",
   "estado_ultimo_objetivo": "COMPLETADO",
   "fallos_consecutivos": 0,
   "intervalo_actual_segundos": 1800,
   "motivo_parada": "Pruebas completadas satisfactoriamente",
-  "proximo_ciclo": "2026-10-02 14:30:13"
+  "proximo_ciclo": "2026-10-02 15:00:26"
 }
