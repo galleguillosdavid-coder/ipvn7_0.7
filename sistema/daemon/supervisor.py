@@ -75,6 +75,8 @@ class DaemonSupervisor:
         if modo in ["PAUSE", "SAFE"]:
             msg = f"Modo {modo}: Descubrimiento realizado ({len(clasificados)} candidatos). Ejecución omitida."
             self.estado["ultimo_fin"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            descanso = self.estado.get("intervalo_actual_segundos", self.config.get("intervalo_segundos", 300))
+            self.estado["proximo_ciclo"] = datetime.fromtimestamp(time.time() + descanso).strftime("%Y-%m-%d %H:%M:%S")
             guardar_estado(self.estado)
             return True, msg
 
@@ -85,6 +87,8 @@ class DaemonSupervisor:
             self.estado["ultimo_fin"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.estado["fallos_consecutivos"] = 0
             self.estado["intervalo_actual_segundos"] = self.config["intervalo_segundos"]
+            descanso = self.config["intervalo_segundos"]
+            self.estado["proximo_ciclo"] = datetime.fromtimestamp(time.time() + descanso).strftime("%Y-%m-%d %H:%M:%S")
             guardar_estado(self.estado)
             return True, msg
 
@@ -129,6 +133,8 @@ class DaemonSupervisor:
         self.estado["intervalo_actual_segundos"] = self.config["intervalo_segundos"]
         self.estado["estado_ultimo_objetivo"] = "COMPLETADO"
         self.estado["ultimo_fin"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        descanso = self.config["intervalo_segundos"]
+        self.estado["proximo_ciclo"] = datetime.fromtimestamp(time.time() + descanso).strftime("%Y-%m-%d %H:%M:%S")
         guardar_estado(self.estado)
         return True, f"Ciclo #{ciclo_num} completado exitosamente: {obj['id']} resuelto."
 
