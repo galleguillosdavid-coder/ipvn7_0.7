@@ -1,5 +1,5 @@
 # REGISTRO DE DESCUBRIMIENTO FACTUAL (sistema/DESCUBRIMIENTO.md)
-> Actualizado automáticamente: 2026-10-02 11:30:22  
+> Actualizado automáticamente: 2026-10-02 12:00:23  
 > Principio: Todo objetivo está sustentado en evidencia observable.
 
 ---
