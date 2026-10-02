@@ -1,5 +1,5 @@
 # BACKLOG DE OBJETIVOS FACTUALES (sistema/OBJETIVOS.md)
-> Actualizado automáticamente: 2026-10-02 13:30:13
+> Actualizado automáticamente: 2026-10-02 14:00:13
 
 ---
 
@@ -7,7 +7,7 @@
 
 | ID | Tipo de Hecho | Descripción | Archivos | Presupuesto | Estado |
 | :--- | :--- | :--- | :--- | :---: | :---: |
-| OBJ-001 | INFRAESTRUCTURA | Existen cambios o archivos no confirmados en la in... | gentes/task.lock, ocs/ops/AUTONOMOUS_CYCLE_LOG.md, ocs/ops/VERIFICATION_REPORT.md, istema/DESCUBRIMIENTO.md, istema/OBJETIVOS.md | REQUIERE_HUMANO | PENDIENTE |
+| OBJ-001 | INFRAESTRUCTURA | Existen cambios o archivos no confirmados en la in... | gentes/task.lock, ocs/ops/AUTONOMOUS_CYCLE_LOG.md, ocs/ops/VERIFICATION_REPORT.md, istema/daemon/estado.json | REQUIERE_HUMANO | PENDIENTE |
 | OBJ-002 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/gateway.go' no... | docs/specs/GATEWAY_API.md | AUTORIZADO | PENDIENTE |
 | OBJ-003 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/server.go' no ... | docs/specs/GATEWAY_API.md | AUTORIZADO | PENDIENTE |
 | OBJ-004 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/server.go' no ... | sistema/DESCUBRIMIENTO.md | AUTORIZADO | PENDIENTE |
