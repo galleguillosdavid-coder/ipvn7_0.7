@@ -3,11 +3,18 @@ keystore/*.key
 keystore/node_identity.key
 config/firebase_credentials.json
 
-# Datos Locales y Registros
+# Variables de Entorno y Configuración Local Privada
+config/.env
+*.env
+
+# Datos Locales, Registros y Locks
 data/*.log
 data/*.db
 data/ipvn7.log
 agentes/task.lock
+sistema/daemon/*.lock
+sistema/daemon/*.pid
+*.pid
 
 # Binarios de Salida
 bin/ipvn7.exe

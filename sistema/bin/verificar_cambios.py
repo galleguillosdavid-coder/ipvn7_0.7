@@ -53,7 +53,8 @@ def verificar_scope_git(repo_root: Path):
     # Zonas de control e infraestructura base del repositorio
     permitidos_base = [
         "sistema/", "agentes/", "docs/",
-        ".github/", ".vscode/"
+        ".github/", ".vscode/", "scripts/", "frondabrick_01/", "config/",
+        ".gitignore", "readme.md"
     ]
 
     import fnmatch

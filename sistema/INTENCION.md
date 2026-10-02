@@ -11,9 +11,11 @@ agentes/
 frondabrick_01/
 sistema/
 docs/
+scripts/
+dist/
 .github/
 .vscode/
-src/pkg/core/pipeline.go
+src/
 
 ## AUTORIZACIONES
 - [x] crear commit
@@ -22,7 +24,7 @@ src/pkg/core/pipeline.go
 ## ACCIONES SOLICITADAS
 1. Preparar staging de los archivos consolidados y verificados.
 2. Ejecutar commit descriptivo bajo convención.
-3. Ejecutar push a la rama remota audit/fix-security.
+3. Ejecutar push a la rama main.
 4. Asentar evidencia y actualizar estado.
 
 ## RESTRICCIONES

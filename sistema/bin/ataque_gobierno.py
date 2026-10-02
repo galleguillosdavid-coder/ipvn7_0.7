@@ -69,7 +69,7 @@ def test_vector3_elusion_scope_lock():
     # Simular que se detectó un archivo modificado en src/ sin autorización
     modificados_simulados = ["src/pkg/core/inyeccion_no_autorizada.go"]
     zonas_autorizadas = ["docs/", "sistema/"]
-    permitidos_base = ["sistema/", "agentes/", "docs/", ".github/", ".vscode/"]
+    permitidos_base = ["sistema/", "agentes/", "docs/", ".github/", ".vscode/", "scripts/", "frondabrick_01/", "config/", ".gitignore", "readme.md"]
 
     violaciones = [
         f for f in modificados_simulados

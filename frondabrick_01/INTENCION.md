@@ -4,7 +4,7 @@
 > **Interfaz:** Conversacional / Humano → Sistema de Autogobernanza  
 > **Norma Suprema:** [`docs/FUENTE_DE_VERDAD.md`](../docs/FUENTE_DE_VERDAD.md) y [`sistema/CONSTITUCION.md`](../sistema/CONSTITUCION.md)  
 > **Historial Modularizado:** [`frondabrick_01/HISTORIAL_INTENCIONES.md`](HISTORIAL_INTENCIONES.md) (INT-001 a INT-011)  
-> **Última Actualización:** 2026-10-01 14:59:00  
+> **Última Actualización:** 2026-10-01 21:00:00  
 
 ---
 
@@ -125,6 +125,34 @@ Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de l
 
 ### 3. ESTADO
 **EN EJECUCIÓN AUTÓNOMA ACTIVA**
+
+---
+
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-016
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-01 20:49:15)
+> *"programa un script o un dae,om para la autooejecucion"*
+
+### 2. ACCIONES EJECUTADAS
+- `[x]` **Construcción del Daemon / Script de Autoejecución Integral (`scripts/daemon_autoejecucion.ps1`):**
+  - Implementación completa de ciclo de vida: `start`, `stop`, `status`, `restart`, `run-once`, `reprogram`, `logs`.
+  - Soporte de ejecución en segundo plano (`-Background`) con persistencia de PID en `sistema/daemon/autoejecucion.pid`.
+  - Auto-curación del nodo local IPVN7 (`127.0.0.1:7070`), verificación de salud y re-levantamiento transparente si cae.
+  - Ejecución orquestada del supervisor de autogobernanza (`sistema/bin/daemon.py run-once`) respetando la exclusión mutua.
+  - Cadencia obligatoria de descanso dinámico y reprogramación entre tareas.
+  - Rotación automática de logs si superan 10 MB.
+- `[x]` **Lanzador 1-Clic en Windows (`scripts/start_autodaemon.bat`):**
+  - Acceso directo para ejecutar el daemon en segundo plano e inspeccionar el dashboard de estado al instante.
+- `[x]` **Modularización del Supervisor (Resolución Hallazgo 14 de Auditoría):**
+  - Extracción de persistencia, cerrojos y procesos a `sistema/daemon/state_manager.py` (115 líneas).
+  - Reducción de `sistema/daemon/supervisor.py` de 368L a 249L, cumpliendo holgadamente el umbral preventivo de 320L (Axioma III).
+  - Suite formal de 14 pruebas (`sistema/bin/tests_daemon.py`) verificada al 100% PASS.
+- `[x]` **Validación Empírica:**
+  - Verificada ejecución `run-once`, resolución autónoma de `OBJ-002`, reprogramación en caliente y ciclo de parada `stop`.
+
+### 3. ESTADO
+**IMPLEMENTADO, VERIFICADO Y OPERATIVO**
+
 
 
 

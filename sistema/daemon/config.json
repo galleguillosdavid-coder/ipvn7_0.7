@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "modo_inicial": "RUN",
-  "intervalo_segundos": 300,
+  "intervalo_segundos": 600,
   "intervalo_min_segundos": 60,
   "intervalo_max_segundos": 3600,
   "backoff_multiplicador": 2.0,

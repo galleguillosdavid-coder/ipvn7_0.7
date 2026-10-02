@@ -35,7 +35,9 @@ data/spool/*.jpg
 data/spool/*.json
 data/local_drop/
 data/storage/
-.agents/task.lock
-.agents/*.csv
+*.pid
+*.lock
+agentes/task.lock
 docs/AUTONOMOUS_CYCLE_LOG.md
 docs/VERIFICATION_REPORT.md
+
