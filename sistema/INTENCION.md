@@ -1,32 +1,91 @@
-# INTENCIÓN ACTIVA — FASE 20 (COMMIT Y PUSH DE GOBERNANZA Y CHG-012)
+# INTENCIÓN ACTUAL
 
-ESTADO: ACTIVA
-FASE: 20
+```text
+CONSTITUCION
+    ↓
+ESTADO
+    ↓
+INTENCION
+    ↓
+VALIDACIÓN
+    ↓
+PLAN
+    ↓
+AUTORIZACIÓN
+    ↓
+EJECUCIÓN
+    ↓
+ATAQUE
+    ↓
+SEGURIDAD
+    ↓
+VERIFICACIÓN
+    ↓
+MEDICIÓN
+    ↓
+EVIDENCIA
+    ↓
+CIERRE
+```
 
-## OBJETIVO
-Realizar el commit y push ordenado y verificado de todos los avances consolidados (Control Plane sistema/, Agentes Especializados agentes/, Agente Principal FrondaBrick_01, Interfaz Conversacional frondabrick_01/ y Optimización Lock-Free CHG-012 en src/pkg/core/pipeline.go).
+ESTADO: VACÍO
+
+## OBJETIVO HUMANO
+
+Escribir aquí.
+
+## ALCANCE
+
+Escribir aquí.
+
+## NO HACER
+
+Escribir aquí.
 
 ## ARCHIVOS O ÁREAS AUTORIZADAS
-agentes/
-frondabrick_01/
-sistema/
-docs/
-scripts/
-dist/
-.github/
-.vscode/
-src/
+
+Escribir aquí.
+
+## RESULTADO ESPERADO
+
+Escribir aquí.
 
 ## AUTORIZACIONES
-- [x] crear commit
-- [x] hacer push
 
-## ACCIONES SOLICITADAS
-1. Preparar staging de los archivos consolidados y verificados.
-2. Ejecutar commit descriptivo bajo convención.
-3. Ejecutar push a la rama main.
-4. Asentar evidencia y actualizar estado.
+- [ ] modificar código
+- [ ] crear archivos
+- [ ] eliminar archivos
+- [ ] ejecutar tests
+- [ ] modificar configuración
+- [ ] crear commit
+- [ ] hacer push
 
-## RESTRICCIONES
-- Todos los tests de Go y static analysis deben estar en 100% PASS antes de publicar.
-- Cero archivos huérfanos o fuera de gobernanza.
+## CRITERIO DE TERMINACIÓN
+
+Escribir aquí.
+
+---
+
+# BLOQUE DE CONTROL
+
+La IA debe seguir estrictamente el flujo canónico:
+
+1. CONSTITUCION (`sistema/CONSTITUCION.md`)
+2. ESTADO (`sistema/ESTADO.md`)
+3. INTENCION (`sistema/INTENCION.md`)
+4. VALIDACIÓN (Scope Lock y Anti-Inyección)
+5. PLAN (`sistema/PLAN.md`)
+6. AUTORIZACIÓN (Verificación de checkboxes `[x]`)
+7. EJECUCIÓN (Implementador)
+8. ATAQUE (Atacante / Fuzzing)
+9. SEGURIDAD (Seguridad / Criptografía)
+10. VERIFICACIÓN (Verificador / Tests unitarios y race)
+11. MEDICIÓN (Rendimiento / Benchmarks)
+12. EVIDENCIA (`sistema/EVIDENCIA.md`)
+13. CIERRE (`sistema/historial/`, actualización de `ESTADO.md` y reseteo de `INTENCION.md` a `VACÍO`)
+
+Nunca ejecutar directamente sin transformar primero a `PLAN.md`.
+
+---
+
+# FIN DE INTENCIÓN
