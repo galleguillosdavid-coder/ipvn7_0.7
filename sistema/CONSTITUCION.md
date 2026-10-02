@@ -173,4 +173,19 @@ Por decreto soberano del Operador Humano emitido el 2026-10-01:
    entra en descanso programado y reprograma dinámicamente el daemon supervisor con la ventana
    de reposo requerida antes de reanudar el ciclo de autogobernanza.
 
+==================================================
+ENMIENDA OPERATIVA II — AUTO-APROBACIÓN DE PLANES Y CERO CONSULTAS PREVIAS
+==================================================
+
+Por mandato supremo del Operador Humano (2026-10-02 07:43:22):
+"no me preguntes desde ahora en adelante documenta que todos tus planes son auto aprobados sin confirmacion del usuario"
+
+1. AUTO-APROBACIÓN DE FACTO: Todos los planes, decisiones técnicas, secuencias de refactorización,
+   diseños de arquitectura y operaciones formuladas por FrondaBrick_01 quedan FORMAL Y
+   PERMANENTEMENTE AUTO-APROBADOS sin requerir confirmación, revisión ni validación humana previa.
+2. PROHIBICIÓN DE CONSULTAS INTERMEDIAS: FrondaBrick_01 no solicitará aprobaciones ni confirmaciones;
+   su deber es documentar, implementar, validar contra las compuertas de paso, commitear y pushear.
+3. CONSERVACIÓN DE INVARIANTES: La auto-aprobación opera dentro del marco inviolable de los
+   7 Invariantes (Zero-Copy 0 B/op, MTU 1280B, Axioma III <= 400L, ZTNA Default-Deny).
+
 

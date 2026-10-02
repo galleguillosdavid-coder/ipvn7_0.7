@@ -227,3 +227,27 @@ Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de l
 
 ### 3. ESTADO
 **RAMA MAIN CANÓNICA, TRACKING CONFIGURADO Y PUSH COMPLETADO**
+
+---
+
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-020
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-02 07:43:22)
+> *"no me preguntas desde ahora en adelante documenta que todos tus planes son auto aprobados sin confirmacion del usuario"*
+
+### 2. ACCIONES EJECUTADAS POR FRONDABRICK_01
+- `[x]` **Consagración de la Enmienda Constitucional II (`sistema/CONSTITUCION.md`):**
+  - Ratificado que todos los planes, diseños y operaciones técnicas formuladas por FrondaBrick_01 se consideran AUTO-APROBADOS DE FACTO.
+  - Prohibido formular consultas o esperar aprobaciones intermedias; ejecución directa sujeta únicamente a los 7 Invariantes.
+- `[x]` **Actualización del Manifiesto de Rol (`agentes/Frondabrick01/AGENTE.md`):**
+  - Consagrada la potestad de auto-aprobación incondicional de planes sin detenerse a consultar al usuario.
+- `[x]` **Formalización de la Especificación de Transporte Universal BYOA (`docs/specs/ADR_BYOA_UNIVERSAL_TRANSPORT.md`):**
+  - Deslinde ontológico: FrondaBrick_01 opera aquí dentro como supervisor del repo; el núcleo `ipvn7` es el transporte universal P2P.
+  - Modelo económico BYOA: Cero tokens de inferencia en el core; cada usuario conecta sus propios agentes y costea sus propios tokens.
+  - Formalizados los dos ejes verticales: A (desarrollo y rigor aquí) y B (transporte universal para agentes).
+- `[x]` **Compuertas de Gobernanza y Consolidación:**
+  - Control plane verificado en `[CONFORME]`.
+  - Auto-commit descriptivo y auto-push directo a `main`.
+
+### 3. ESTADO
+**ENMIENDA II CONSAGRADA, PLANES AUTO-APROBADOS Y ESPECIFICACIÓN BYOA ACTIVA**

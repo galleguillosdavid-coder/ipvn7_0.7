@@ -35,7 +35,7 @@ Ninguno (Árbol limpio y verificado; cero modificaciones pendientes en working t
 Fase 20 archivada y consolidada en Git (commit 56325cb). Control Plane Nivel 2 y Nivel 3 sincronizados con `INTENCION.md` restablecida a `ESTADO: VACÍO`.
 
 ## ÚLTIMO CAMBIO
-CHG-015: Establecimiento de main como rama principal canónica con tracking upstream a origin/main, sincronización de telemetría de ciclos autónomos y push soberano.
+CHG-016: Ratificación de Enmienda Constitucional II (Auto-Aprobación Incondicional de Planes y Cero Consultas) y consagración canónica de la especificación ADR BYOA.
 
 ## BLOQUEOS
 Ninguno.
@@ -44,4 +44,4 @@ Ninguno.
 - Ejecución continua del daemon autónomo y resolución de objetivos descubiertos.
 
 ## ÚLTIMA ACTUALIZACIÓN
-2026-10-01 21:50:00
+2026-10-02 07:44:00

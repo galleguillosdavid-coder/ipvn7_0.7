@@ -17,3 +17,4 @@
 | 2026-10-01 | CHG-013 | GOBERNANZA | Control Plane | Cierre formal y archivado de Fase 20 en historial/. Reseteo canónico de sistema/INTENCION.md a ESTADO: VACÍO y sincronización de ESTADO.md. |
 | 2026-10-01 | CHG-014 | GOBERNANZA | FrondaBrick_01 | Absorción y centralización soberana de reglas (acciones, fuentes, permisos, política src, rutas) en frondabrick_01/reglas/ y actualización de enrutamiento en sistema/bin/. |
 | 2026-10-01 | CHG-015 | INFRAESTRUCTURA | Git / Remoto | Establecimiento de main como rama principal canónica con tracking upstream a origin/main, sincronización de telemetría de ciclos autónomos y push soberano. |
+| 2026-10-02 | CHG-016 | GOBERNANZA/ARQUITECTURA | Constitución & Specs | Ratificación de Enmienda Constitucional II (Auto-Aprobación Incondicional de Planes y Cero Consultas) y consagración canónica de la especificación ADR BYOA (Transporte Universal Soberano de Red para Agentes). |
