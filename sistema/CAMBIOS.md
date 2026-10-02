@@ -18,3 +18,4 @@
 | 2026-10-01 | CHG-014 | GOBERNANZA | FrondaBrick_01 | Absorción y centralización soberana de reglas (acciones, fuentes, permisos, política src, rutas) en frondabrick_01/reglas/ y actualización de enrutamiento en sistema/bin/. |
 | 2026-10-01 | CHG-015 | INFRAESTRUCTURA | Git / Remoto | Establecimiento de main como rama principal canónica con tracking upstream a origin/main, sincronización de telemetría de ciclos autónomos y push soberano. |
 | 2026-10-02 | CHG-016 | GOBERNANZA/ARQUITECTURA | Constitución & Specs | Ratificación de Enmienda Constitucional II (Auto-Aprobación Incondicional de Planes y Cero Consultas) y consagración canónica de la especificación ADR BYOA (Transporte Universal Soberano de Red para Agentes). |
+| 2026-10-02 | CHG-017 | AUTOMATIZACIÓN | Cron & Supervisor | Activación de cron recurrente cada 30 minutos (*/30 * * * *) en background y reprogramación del descanso del daemon local a 1800s. |

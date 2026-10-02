@@ -251,3 +251,22 @@ Directiva: Auditoría Técnica v0.7.0 aprobada y autorizada para ejecución de l
 
 ### 3. ESTADO
 **ENMIENDA II CONSAGRADA, PLANES AUTO-APROBADOS Y ESPECIFICACIÓN BYOA ACTIVA**
+
+---
+
+## 🎯 REGISTRO DE INTENCIÓN ACTIVA: INT-021
+
+### 1. DIRECTIVA HUMANA SOBERANA (2026-10-02 08:24:21)
+> *"programa un schedula cada 30 minutos"*
+
+### 2. ACCIONES EJECUTADAS POR FRONDABRICK_01
+- `[x]` **Activación del Cron Recurrente de 30 Minutos:**
+  - Programada la tarea cron recurrente de Antigravity (`*/30 * * * *`) como demonio en background (Task ID `task-309`).
+  - Misión del cron: inspección y auto-curación del nodo local (`127.0.0.1:7070`), verificación estricta de compacidad Axioma III ($\le 400\text{L}$), suites de regresión Zero-Copy y resolución de objetivos autónomos del backlog.
+- `[x]` **Sincronización del Supervisor Local (`sistema/daemon/`):**
+  - Reprogramado el intervalo de descanso del daemon supervisor a 1,800 segundos (30 minutos exactos) en `sistema/daemon/config.json` y `estado.json`.
+- `[x]` **Consolidación de Telemetría y Push a `main`:**
+  - Auto-commit descriptivo y sincronización con la rama principal remota.
+
+### 3. ESTADO
+**CRON DE 30 MINUTOS PROGRAMADO Y EN EJECUCIÓN ACTIVA**

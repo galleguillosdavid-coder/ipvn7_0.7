@@ -35,13 +35,13 @@ Ninguno (Árbol limpio y verificado; cero modificaciones pendientes en working t
 Fase 20 archivada y consolidada en Git (commit 56325cb). Control Plane Nivel 2 y Nivel 3 sincronizados con `INTENCION.md` restablecida a `ESTADO: VACÍO`.
 
 ## ÚLTIMO CAMBIO
-CHG-016: Ratificación de Enmienda Constitucional II (Auto-Aprobación Incondicional de Planes y Cero Consultas) y consagración canónica de la especificación ADR BYOA.
+CHG-017: Activación de cron recurrente cada 30 minutos (*/30 * * * *) y reprogramación del descanso del daemon local a 1800s.
 
 ## BLOQUEOS
 Ninguno.
 
 ## PENDIENTES
-- Ejecución continua del daemon autónomo y resolución de objetivos descubiertos.
+- Ejecución recurrente del cron cada 30 minutos y resolución de objetivos autónomos.
 
 ## ÚLTIMA ACTUALIZACIÓN
-2026-10-02 07:44:00
+2026-10-02 08:25:00
