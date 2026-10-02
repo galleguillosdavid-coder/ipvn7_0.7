@@ -1,5 +1,5 @@
 # BACKLOG DE OBJETIVOS FACTUALES (sistema/OBJETIVOS.md)
-> Actualizado automáticamente: 2026-10-01 21:01:58
+> Actualizado automáticamente: 2026-10-01 21:10:10
 
 ---
 
@@ -7,7 +7,7 @@
 
 | ID | Tipo de Hecho | Descripción | Archivos | Presupuesto | Estado |
 | :--- | :--- | :--- | :--- | :---: | :---: |
-| OBJ-001 | INFRAESTRUCTURA | Existen cambios o archivos no confirmados en la in... | gitignore, gentes/task.lock, config/.env, onfig/git.ignore, ocs/ops/AUTONOMOUS_CYCLE_LOG.md | REQUIERE_HUMANO | PENDIENTE |
+| OBJ-001 | INFRAESTRUCTURA | Existen cambios o archivos no confirmados en la in... | istema/daemon/estado.json | REQUIERE_HUMANO | PENDIENTE |
 | OBJ-002 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/gateway.go' no... | docs/specs/GATEWAY_API.md | AUTORIZADO | PENDIENTE |
 | OBJ-003 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/server.go' no ... | docs/specs/GATEWAY_API.md | AUTORIZADO | PENDIENTE |
 | OBJ-004 | REFERENCIA_ROTA | El archivo destino '../src/pkg/core/server.go' no ... | sistema/DESCUBRIMIENTO.md | AUTORIZADO | PENDIENTE |

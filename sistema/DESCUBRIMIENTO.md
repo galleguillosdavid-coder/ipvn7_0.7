@@ -1,5 +1,5 @@
 # REGISTRO DE DESCUBRIMIENTO FACTUAL (sistema/DESCUBRIMIENTO.md)
-> Actualizado automáticamente: 2026-10-01 21:01:58  
+> Actualizado automáticamente: 2026-10-01 21:10:10  
 > Principio: Todo objetivo está sustentado en evidencia observable.
 
 ---
@@ -19,8 +19,8 @@
 
 ### [OBJ-001] INFRAESTRUCTURA
 - **Origen:** Existen cambios o archivos no confirmados en la infraestructura.
-- **Evidencia Observable:** 19 archivos con cambios pendientes de reconciliación en working tree.
-- **Archivos:** gitignore, gentes/task.lock, config/.env, onfig/git.ignore, ocs/ops/AUTONOMOUS_CYCLE_LOG.md
+- **Evidencia Observable:** 1 archivos con cambios pendientes de reconciliación en working tree.
+- **Archivos:** istema/daemon/estado.json
 - **Autonomía:** REQUIERE_HUMANO (Requiere acciones sobre Git (commit/staging) no autorizadas de forma autónoma)
 - **Estado:** PENDIENTE
 
